@@ -60,6 +60,11 @@ class Util:
         user_name = os.getenv('USER')
     cpu_count = multiprocessing.cpu_count()
 
+    if host_os == 'windows':
+        project_dir = 'd:/workspace/project/readonly'
+    else:
+        project_dir = '/workspace/project/readonly'
+
     @staticmethod
     def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, log_file=''):
         orig_cmd = cmd
@@ -308,6 +313,27 @@ class Util:
     @staticmethod
     def diff_list(a, b):
         return list(set(a).difference(set(b)))
+
+    @staticmethod
+    def send_email(sender, to, subject, content, type='plain'):
+        if isinstance(to, list):
+            to = ','.join(to)
+
+        to_list = to.split(',')
+        msg = MIMEMultipart('alternative')
+        msg['From'] = sender
+        msg['To'] = to
+        msg['Subject'] = subject
+        msg.attach(MIMEText(content, type))
+
+        try:
+            smtp = smtplib.SMTP('localhost')
+            smtp.sendmail(sender, to_list, msg.as_string())
+            _info('Email was sent successfully')
+        except Exception as e:
+            _error('Failed to send mail: %s' % e)
+        finally:
+            smtp.quit()
 
 class Timer():
     def __init__(self, microsecond=False):
