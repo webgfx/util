@@ -97,8 +97,11 @@ class Util:
         if show_duration:
             Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
 
-        if exit_on_error and ret:
-            Util.error('Failed to execute command "%s"' % orig_cmd)
+        if ret:
+            if exit_on_error:
+                Util.error('Failed to execute command "%s"' % orig_cmd)
+            else:
+                Util.warning('Failed to execute command "%s"' % orig_cmd)
 
         return result
 
@@ -329,9 +332,9 @@ class Util:
         try:
             smtp = smtplib.SMTP('localhost')
             smtp.sendmail(sender, to_list, msg.as_string())
-            _info('Email was sent successfully')
+            Util.info('Email was sent successfully')
         except Exception as e:
-            _error('Failed to send mail: %s' % e)
+            Util.error('Failed to send mail: %s' % e)
         finally:
             smtp.quit()
 
