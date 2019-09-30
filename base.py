@@ -356,7 +356,7 @@ class Timer():
 
 class MainRepo:
     tmp_dir = Util.get_dir(__file__)
-    while not os.path.exists(tmp_dir + '/.git'):
+    while not os.path.exists(tmp_dir + '/.git') or os.path.basename(tmp_dir) == 'util':
         tmp_dir = Util.get_dir(tmp_dir)
     root_dir = Util.use_slash(tmp_dir)
     tool_dir = '%s/tool' % root_dir
