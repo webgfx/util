@@ -32,6 +32,8 @@ import time
 
 class Util:
     MAX_REV = 9999999
+    CHROME_BUILD_PATTERN = '(\d{6}).zip'
+
     host_os = platform.system().lower()
     host_os_id = ''
     host_os_release = '0.0'
@@ -337,6 +339,20 @@ class Util:
             Util.error('Failed to send mail: %s' % e)
         finally:
             smtp.quit()
+
+    @staticmethod
+    def get_working_dir_commit_info(src_dir):
+        Util.chdir(src_dir)
+        cmd = 'git show -s --format=%ci -1'
+        result = Util.execute(cmd, return_out=True)
+        date = result[1].split(' ')[0].replace('-', '')
+        return [date]
+
+    @staticmethod
+    def get_mesa_build_pattern(rev=0):
+        if not rev:
+            rev = '(.*)'
+        return 'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
 
 class Timer():
     def __init__(self, microsecond=False):
