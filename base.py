@@ -343,7 +343,7 @@ class Util:
     @staticmethod
     def get_working_dir_commit_info(src_dir):
         Util.chdir(src_dir)
-        cmd = 'git show -s --format=%ci -1'
+        cmd = 'git show -s --format=%ai -1'
         result = Util.execute(cmd, return_out=True)
         date = result[1].split(' ')[0].replace('-', '')
         return [date]
