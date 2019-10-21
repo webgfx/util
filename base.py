@@ -413,7 +413,7 @@ class Program():
         if args.log_file:
             log_file = args.log_file
         else:
-            script_name = sys.argv[0].split('/')[-1].replace('.py', '')
+            script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
             log_file = MainRepo.ignore_log_dir + '/' + script_name + '-' + timestamp + '.log'
         Util.info('Log file: %s' % log_file)
 
@@ -426,7 +426,7 @@ class Program():
         Util.set_path(args.extra_path)
 
         self.args = args
-        self.root_dir = root_dir
+        self.root_dir = Util.use_slash(root_dir)
         self.timestamp = timestamp
         self.log_file = log_file
 
