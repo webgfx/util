@@ -53,8 +53,6 @@ class Util:
     elif host_os == 'windows':
         host_os_release = platform.version()
 
-    proxy_address = 'child-prc.intel.com'
-    proxy_port = '913'
     host_name = socket.gethostname()
     if host_os == 'windows':
         user_name = os.getenv('USERNAME')
@@ -413,7 +411,7 @@ class Program():
         if args.log_file:
             log_file = args.log_file
         else:
-            script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+            script_name = os.path.basename(sys.argv[0]).replace('.py', '')
             log_file = MainRepo.ignore_log_dir + '/' + script_name + '-' + timestamp + '.log'
         Util.info('Log file: %s' % log_file)
 
@@ -426,7 +424,7 @@ class Program():
         Util.set_path(args.extra_path)
 
         self.args = args
-        self.root_dir = Util.use_slash(root_dir)
+        self.root_dir = root_dir
         self.timestamp = timestamp
         self.log_file = log_file
 
