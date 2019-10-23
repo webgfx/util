@@ -140,7 +140,7 @@ class Util:
             quit(error_code)
 
     @staticmethod
-    def chdir(dir_path, verbose=False):
+    def chdir(dir_path, verbose=True):
         if verbose:
             Util.info('Enter ' + dir_path)
         os.chdir(dir_path)
@@ -352,6 +352,38 @@ class Util:
             rev = '(.*)'
         return 'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
 
+    @staticmethod
+    def get_quotation():
+        if Util.host_os == 'windows':
+            quotation = '\"'
+        else:
+            quotation = '\''
+
+        return quotation
+
+    @staticmethod
+    def get_exec_suffix():
+        if Util.host_os == 'windows':
+            suffix = '.exe'
+        else:
+            suffix = ''
+
+        return suffix
+
+    @staticmethod
+    def get_gclient_cmd(cmd_type, job_count=0, extra_cmd=''):
+        cmd = 'gclient ' + cmd_type
+        if extra_cmd:
+            cmd += ' ' + extra_cmd
+        if cmd_type == 'sync':
+            cmd += ' -n -D -R --break_repo_locks --delete_unversioned_trees'
+
+        if not job_count:
+            job_count = Util.cpu_count
+        cmd += ' -j%s' % job_count
+
+        return cmd
+
 class Timer():
     def __init__(self, microsecond=False):
         self.timer = [0, 0]
@@ -419,6 +451,7 @@ class Program():
             sys.settrace(Util.strace_function)
 
         Util.ensure_dir(root_dir)
+        Util.chdir(root_dir)
         Util.ensure_dir(MainRepo.ignore_timestamp_dir)
         Util.ensure_dir(MainRepo.ignore_log_dir)
         Util.set_path(args.extra_path)
