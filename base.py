@@ -31,53 +31,19 @@ import threading
 import time
 
 class Util:
-    MAX_REV = 9999999
-    CHROME_BUILD_PATTERN = '(\d{6}).zip'
-
-    host_os = platform.system().lower()
-    host_os_id = ''
-    host_os_release = '0.0'
-    if host_os == 'linux':
-        result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
-        if re.search('CHROMEOS', result[1]):
-            host_os = 'chromeos'
-
-    if host_os == 'chromeos':
-        host_os_release = platform.platform()
-    elif host_os == 'darwin':
-        host_os_release = platform.mac_ver()[0]
-    elif host_os == 'linux':
-        dist = platform.dist()
-        host_os_id = dist[0].lower()
-        host_os_release = dist[1]
-    elif host_os == 'windows':
-        host_os_release = platform.version()
-
-    host_name = socket.gethostname()
-    if host_os == 'windows':
-        user_name = os.getenv('USERNAME')
-    else:
-        user_name = os.getenv('USER')
-    cpu_count = multiprocessing.cpu_count()
-
-    if host_os == 'windows':
-        project_dir = 'd:/workspace/project/readonly'
-    else:
-        project_dir = '/workspace/project/readonly'
-
     @staticmethod
     def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, log_file=''):
         orig_cmd = cmd
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        if Util.host_os == 'windows':
+        if Util.HOST_OS == 'windows':
             cmd = '%s 2>&1' % cmd
         else:
             cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
         if log_file:
             cmd += ' | tee -a %s' % log_file
-        if not Util.host_os == 'windows':
+        if not Util.HOST_OS == 'windows':
             cmd += '; (exit ${PIPESTATUS})"'
 
         if show_duration:
@@ -140,7 +106,7 @@ class Util:
             quit(error_code)
 
     @staticmethod
-    def chdir(dir_path, verbose=True):
+    def chdir(dir_path, verbose=False):
         if verbose:
             Util.info('Enter ' + dir_path)
         os.chdir(dir_path)
@@ -227,14 +193,6 @@ class Util:
         f.close()
 
     @staticmethod
-    def use_slash(s):
-        return s.replace('\\', '/')
-
-    @staticmethod
-    def use_backslash(s):
-        return s.replace('/', '\\')
-
-    @staticmethod
     def get_datetime(format='%Y%m%d%H%M%S'):
         return time.strftime(format, time.localtime())
 
@@ -250,17 +208,17 @@ class Util:
     @staticmethod
     def set_path(extra_path=''):
         path = Util.get_env('PATH')
-        if Util.host_os == 'windows':
+        if Util.HOST_OS == 'windows':
             splitter = ';'
-        elif Util.host_os in ['linux', 'darwin', 'chromeos']:
+        elif Util.HOST_OS in ['linux', 'darwin', 'chromeos']:
             splitter = ':'
 
         paths = path.split(splitter)
 
-        if Util.host_os == 'linux':
+        if Util.HOST_OS == 'linux':
             new_paths = ['/usr/bin', '/usr/sbin', '/workspace/project/readonly/depot_tools']
-        else:
-            new_paths = []
+        elif Util.HOST_OS == 'windows':
+            new_paths = ['d:/workspace/project/readonly/depot_tools']
 
         if extra_path:
             new_paths = extra_path.split(splitter) + new_paths
@@ -272,9 +230,9 @@ class Util:
         Util.set_env('PATH', splitter.join(paths))
 
     @staticmethod
-    def set_proxy():
-        http_proxy = 'http://%s:%s' % (Util.proxy_address, Util.proxy_port)
-        https_proxy = 'https://%s:%s' % (Util.proxy_address, Util.proxy_port)
+    def set_proxy(address, port):
+        http_proxy = 'http://%s:%s' % (address, port)
+        https_proxy = 'https://%s:%s' % (address, port)
         Util.set_env('http_proxy', http_proxy)
         Util.set_env('https_proxy', https_proxy)
 
@@ -350,11 +308,11 @@ class Util:
     def get_mesa_build_pattern(rev=0):
         if not rev:
             rev = '(.*)'
-        return 'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
+        return r'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
 
     @staticmethod
     def get_quotation():
-        if Util.host_os == 'windows':
+        if Util.HOST_OS == 'windows':
             quotation = '\"'
         else:
             quotation = '\''
@@ -363,7 +321,7 @@ class Util:
 
     @staticmethod
     def get_exec_suffix():
-        if Util.host_os == 'windows':
+        if Util.HOST_OS == 'windows':
             suffix = '.exe'
         else:
             suffix = ''
@@ -371,18 +329,49 @@ class Util:
         return suffix
 
     @staticmethod
-    def get_gclient_cmd(cmd_type, job_count=0, extra_cmd=''):
-        cmd = 'gclient ' + cmd_type
-        if extra_cmd:
-            cmd += ' ' + extra_cmd
-        if cmd_type == 'sync':
-            cmd += ' -n -D -R --break_repo_locks --delete_unversioned_trees'
+    def use_slash(s):
+        return s.replace('\\', '/')
 
-        if not job_count:
-            job_count = Util.cpu_count
-        cmd += ' -j%s' % job_count
+    @staticmethod
+    def use_backslash(s):
+        return s.replace('/', '\\')
 
-        return cmd
+    MAX_REV = 9999999
+    CHROME_BUILD_PATTERN = r'(\d{6}).zip'
+    HOST_OS = platform.system().lower()
+    HOST_OS_ID = ''
+    HOST_OS_RELEASE = '0.0'
+    if HOST_OS == 'linux':
+        result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
+        if re.search('CHROMEOS', result[1]):
+            HOST_OS = 'chromeos'
+
+    if HOST_OS == 'chromeos':
+        HOST_OS_RELEASE = platform.platform()
+    elif HOST_OS == 'darwin':
+        HOST_OS_RELEASE = platform.mac_ver()[0]
+    elif HOST_OS == 'linux':
+        DIST = platform.dist()
+        HOST_OS_ID = dist[0].lower()
+        HOST_OS_RELEASE = dist[1]
+    elif HOST_OS == 'windows':
+        HOST_OS_RELEASE = platform.version()
+
+    HOST_NAME = socket.gethostname()
+    if HOST_OS == 'windows':
+        USER_NAME = os.getenv('USERNAME')
+    else:
+        USER_NAME = os.getenv('USER')
+    CPU_COUNT = multiprocessing.cpu_count()
+
+    if HOST_OS == 'windows':
+        PROJECT_DIR = 'd:/workspace/project/readonly'
+    else:
+        PROJECT_DIR = '/workspace/project/readonly'
+
+    APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
+    PROGRAMFILES_DIR = use_slash.__func__(os.getenv('PROGRAMFILES'))
+    PROGRAMFILESX86_DIR = use_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
 
 class Timer():
     def __init__(self, microsecond=False):
@@ -400,19 +389,19 @@ class Timer():
 
         return self.timer[1] - self.timer[0]
 
-class MainRepo:
+class ScriptRepo:
     tmp_dir = Util.get_dir(__file__)
     while not os.path.exists(tmp_dir + '/.git') or os.path.basename(tmp_dir) == 'util':
         tmp_dir = Util.get_dir(tmp_dir)
-    root_dir = Util.use_slash(tmp_dir)
-    tool_dir = '%s/tool' % root_dir
-    ignore_dir = '%s/ignore' % root_dir
-    ignore_log_dir = '%s/log' % ignore_dir
-    ignore_timestamp_dir = '%s/timestamp' % ignore_dir
-    ignore_chromium_dir = '%s/chromium' % ignore_dir
-    ignore_chromium_selfbuilt_dir = '%s/selfbuilt' % ignore_chromium_dir
-    ignore_chromium_download_dir = '%s/download' % ignore_chromium_dir
-    ignore_chromium_boto_file = '%s/boto.conf' % ignore_chromium_dir
+    ROOT_DIR = Util.use_slash(tmp_dir)
+    TOOL_DIR = '%s/tool' % ROOT_DIR
+    IGNORE_DIR = '%s/ignore' % ROOT_DIR
+    IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
+    IGNORE_TIMESTAMP_DIR = '%s/timestamp' % IGNORE_DIR
+    IGNORE_CHROMIUM_DIR = '%s/chromium' % IGNORE_DIR
+    IGNORE_CHROMIUM_SELFBUILT_DIR = '%s/selfbuilt' % IGNORE_CHROMIUM_DIR
+    IGNORE_CHROMIUM_DOWNLOAD_DIR = '%s/download' % IGNORE_CHROMIUM_DIR
+    IGNORE_CHROMIUM_BOTO_FILE = '%s/boto.conf' % IGNORE_CHROMIUM_DIR
 
 class Program():
     def __init__(self, parser):
@@ -422,7 +411,8 @@ class Program():
 
         parser.add_argument('--extra-path', dest='extra_path', help='extra path for execution, such as path for depot_tools')
         parser.add_argument('--fixed-timestamp', dest='fixed_timestamp', help='fixed timestamp for test sake. We may run multiple tests and results are in same dir', action='store_true')
-        parser.add_argument('--strace', dest='strace', help='system trace', action='store_true')
+        parser.add_argument('--proxy', dest='proxy', help='proxy')
+        parser.add_argument('--python-ver', dest='python_ver', help='python version', type=int, default=0)
 
         args = parser.parse_args()
 
@@ -444,22 +434,56 @@ class Program():
             log_file = args.log_file
         else:
             script_name = os.path.basename(sys.argv[0]).replace('.py', '')
-            log_file = MainRepo.ignore_log_dir + '/' + script_name + '-' + timestamp + '.log'
+            log_file = ScriptRepo.IGNORE_LOG_DIR + '/' + script_name + '-' + timestamp + '.log'
         Util.info('Log file: %s' % log_file)
 
-        if args.strace:
-            sys.settrace(Util.strace_function)
+        if args.proxy:
+            proxy_parts = args.proxy.split(':')
+            proxy_address = proxy_parts[0]
+            proxy_port = proxy_parts[1]
+        else:
+            proxy_address = ''
+            proxy_port = ''
+
+        if args.python_ver == 3:
+            if Util.HOST_OS == 'windows':
+                Util.set_path()
+            else:
+                pass
+            Util.set_env('GCLIENT_PY3', '1')
+        elif args.python_ver == 2:
+            if Util.HOST_OS == 'windows':
+                Util.set_path('c:/python27')
+            else:
+                pass
 
         Util.ensure_dir(root_dir)
         Util.chdir(root_dir)
-        Util.ensure_dir(MainRepo.ignore_timestamp_dir)
-        Util.ensure_dir(MainRepo.ignore_log_dir)
+        Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
+        Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
         Util.set_path(args.extra_path)
 
         self.args = args
         self.root_dir = root_dir
         self.timestamp = timestamp
         self.log_file = log_file
+        self.proxy_address = proxy_address
 
     def execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, return_out=return_out, show_duration=show_duration, dryrun=dryrun, log_file=self.log_file)
+
+    def execute_gclient(self, cmd_type, job_count=0, extra_cmd='', verbose=False):
+        cmd = 'gclient ' + cmd_type
+        if extra_cmd:
+            cmd += ' ' + extra_cmd
+        if cmd_type == 'sync':
+            cmd += ' -n -D -R --break_repo_locks --delete_unversioned_trees'
+
+        if not job_count:
+            job_count = Util.CPU_COUNT
+        cmd += ' -j%s' % job_count
+
+        if verbose:
+            cmd += ' -v'
+
+        return Util.execute(cmd=cmd)
