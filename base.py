@@ -206,28 +206,33 @@ class Util:
             os.environ[env] = value
 
     @staticmethod
-    def set_path(extra_path=''):
-        path = Util.get_env('PATH')
-        if Util.HOST_OS == 'windows':
-            splitter = ';'
-        elif Util.HOST_OS in ['linux', 'darwin', 'chromeos']:
-            splitter = ':'
+    def prepend_path(path):
+        paths = Util.get_env('PATH').split(Util.ENV_SPLITTER)
+        new_paths = path.split(Util.ENV_SPLITTER)
 
-        paths = path.split(splitter)
+        for tmp_path in paths:
+            if tmp_path not in new_paths:
+                new_paths.append(tmp_path)
 
-        if Util.HOST_OS == 'linux':
-            new_paths = ['/usr/bin', '/usr/sbin', '/workspace/project/readonly/depot_tools']
-        elif Util.HOST_OS == 'windows':
-            new_paths = ['d:/workspace/project/readonly/depot_tools']
+        Util.set_env('PATH', Util.ENV_SPLITTER.join(new_paths))
 
-        if extra_path:
-            new_paths = extra_path.split(splitter) + new_paths
+    @staticmethod
+    def remove_path(path):
+        paths = Util.get_env('PATH').split(Util.ENV_SPLITTER)
+        for tmp_path in paths:
+            if tmp_path == path:
+                paths.remove(tmp_path)
 
-        for path_new in new_paths:
-            if path_new not in paths:
-                paths.insert(0, path_new)
+        Util.set_env('PATH', Util.ENV_SPLITTER.join(paths))
 
-        Util.set_env('PATH', splitter.join(paths))
+    @staticmethod
+    def has_depot_tools_in_path():
+        paths = Util.get_env('PATH').split(Util.ENV_SPLITTER)
+        for tmp_path in paths:
+            if re.search('depot_tools$', tmp_path):
+                return True
+        else:
+            return False
 
     @staticmethod
     def set_proxy(address, port):
@@ -351,7 +356,7 @@ class Util:
     elif HOST_OS == 'darwin':
         HOST_OS_RELEASE = platform.mac_ver()[0]
     elif HOST_OS == 'linux':
-        DIST = platform.dist()
+        dist = platform.dist()
         HOST_OS_ID = dist[0].lower()
         HOST_OS_RELEASE = dist[1]
     elif HOST_OS == 'windows':
@@ -369,9 +374,15 @@ class Util:
     else:
         PROJECT_DIR = '/workspace/project/readonly'
 
-    APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
-    PROGRAMFILES_DIR = use_slash.__func__(os.getenv('PROGRAMFILES'))
-    PROGRAMFILESX86_DIR = use_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
+    if HOST_OS == 'windows':
+        APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
+        PROGRAMFILES_DIR = use_slash.__func__(os.getenv('PROGRAMFILES'))
+        PROGRAMFILESX86_DIR = use_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
+
+    if HOST_OS == 'windows':
+        ENV_SPLITTER = ';'
+    elif HOST_OS in ['linux', 'darwin', 'chromeos']:
+        ENV_SPLITTER = ':'
 
 class Timer():
     def __init__(self, microsecond=False):
@@ -408,11 +419,8 @@ class Program():
         parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
         parser.add_argument('--timestamp', dest='timestamp', help='timestamp')
         parser.add_argument('--log-file', dest='log_file', help='log file')
-
-        parser.add_argument('--extra-path', dest='extra_path', help='extra path for execution, such as path for depot_tools')
         parser.add_argument('--fixed-timestamp', dest='fixed_timestamp', help='fixed timestamp for test sake. We may run multiple tests and results are in same dir', action='store_true')
         parser.add_argument('--proxy', dest='proxy', help='proxy')
-        parser.add_argument('--python-ver', dest='python_ver', help='python version', type=int, default=0)
 
         args = parser.parse_args()
 
@@ -445,34 +453,23 @@ class Program():
             proxy_address = ''
             proxy_port = ''
 
-        if args.python_ver == 3:
-            if Util.HOST_OS == 'windows':
-                Util.set_path()
-            else:
-                pass
-            Util.set_env('GCLIENT_PY3', '1')
-        elif args.python_ver == 2:
-            if Util.HOST_OS == 'windows':
-                Util.set_path('c:/python27')
-            else:
-                pass
-
         Util.ensure_dir(root_dir)
         Util.chdir(root_dir)
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
-        Util.set_path(args.extra_path)
 
         self.args = args
         self.root_dir = root_dir
         self.timestamp = timestamp
         self.log_file = log_file
         self.proxy_address = proxy_address
+        self.proxy_port = proxy_port
 
     def execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, return_out=return_out, show_duration=show_duration, dryrun=dryrun, log_file=self.log_file)
 
     def execute_gclient(self, cmd_type, job_count=0, extra_cmd='', verbose=False):
+        self._set_boto()
         cmd = 'gclient ' + cmd_type
         if extra_cmd:
             cmd += ' ' + extra_cmd
@@ -486,4 +483,33 @@ class Program():
         if verbose:
             cmd += ' -v'
 
-        return Util.execute(cmd=cmd)
+        if Util.HOST_OS == 'windows':
+            depot_tools_path = 'd:/workspace/project/readonly/depot_tools'
+        else:
+            depot_tools_path = '/workspace/project/readonly/depot_tools'
+
+        if not Util.has_depot_tools_in_path() and os.path.exists(depot_tools_path):
+            Util.prepend_path(depot_tools_path)
+
+        result = Util.execute(cmd=cmd)
+
+        if not Util.has_depot_tools_in_path() and os.path.exists(depot_tools_path):
+            Util.remove_path(depot_tools_path)
+
+        return result
+
+    def _set_boto(self):
+        if not self.args.proxy:
+            return
+
+        boto_file = ScriptRepo.IGNORE_CHROMIUM_BOTO_FILE
+        if not os.path.exists(boto_file):
+            lines = [
+                '[Boto]',
+                'proxy = %s' % self.program.proxy_address,
+                'proxy_port = %s' % self.program.proxy_port,
+                'proxy_rdns = True',
+            ]
+            Util.write_file(boto_file, lines)
+
+        Util.set_env('NO_AUTH_BOTO_CONFIG', boto_file)
