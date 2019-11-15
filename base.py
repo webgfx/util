@@ -310,10 +310,40 @@ class Util:
         return [date]
 
     @staticmethod
-    def get_mesa_build_pattern(rev=0):
-        if not rev:
+    def get_mesa_build_pattern(rev='latest'):
+        if rev == 'latest':
             rev = '(.*)'
         return r'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
+
+    @staticmethod
+    def get_rev_dir(parent_dir, type, rev):
+        if type == 'mesa':
+            rev_pattern = Util.get_mesa_build_pattern(rev)
+        elif type == 'chrome':
+            rev_pattern = Util.CHROME_BUILD_PATTERN
+
+        if rev == 'latest':
+            rev = -1
+            rev_dir = ''
+            files = os.listdir(parent_dir)
+            for file in files:
+                match = re.search(rev_pattern, file)
+                if match:
+                    tmp_rev = int(match.group(1))
+                    if tmp_rev > rev:
+                        rev_dir = file
+                        rev = tmp_rev
+
+            return (rev_dir, rev)
+        else:
+            files = os.listdir(parent_dir)
+            for file in files:
+                match = re.match(rev_pattern, file)
+                if match:
+                    rev_dir = file
+                    return (rev_dir, rev)
+            else:
+                Util.error('Could not find mesa build %s' % rev)
 
     @staticmethod
     def get_quotation():
