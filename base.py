@@ -355,15 +355,6 @@ class Util:
         return quotation
 
     @staticmethod
-    def get_exec_suffix():
-        if Util.HOST_OS == 'windows':
-            suffix = '.exe'
-        else:
-            suffix = ''
-
-        return suffix
-
-    @staticmethod
     def use_slash(s):
         return s.replace('\\', '/')
 
@@ -411,8 +402,11 @@ class Util:
 
     if HOST_OS == 'windows':
         ENV_SPLITTER = ';'
+        EXEC_SUFFIX = '.exe'
     elif HOST_OS in ['linux', 'darwin', 'chromeos']:
         ENV_SPLITTER = ':'
+        EXEC_SUFFIX = ''
+
 
 class Timer():
     def __init__(self, microsecond=False):
