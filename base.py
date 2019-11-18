@@ -30,6 +30,14 @@ import sys
 import threading
 import time
 
+try:
+    from selenium import webdriver
+    from selenium.webdriver.support.ui import WebDriverWait  # noqa: E402
+    from selenium.common.exceptions import TimeoutException  # noqa: E402
+    import win32com.client # install pywin32
+except ImportError:
+    pass
+
 class Util:
     @staticmethod
     def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, log_file=''):
@@ -362,6 +370,129 @@ class Util:
     def use_backslash(s):
         return s.replace('/', '\\')
 
+    @staticmethod
+    def get_chrome_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False):
+        relative_out_dir = 'out-%s-%s' % (target_arch, target_os)
+        relative_out_dir += '-symbol%s' % symbol_level
+
+        if no_component_build:
+            relative_out_dir += '-nocomponent'
+        else:
+            relative_out_dir += '-component'
+
+        return relative_out_dir
+
+    @staticmethod
+    def get_webdriver(module_name, target_os='', module_path='', webdriver_path='', options_extra=[], debug=False):
+        if not target_os:
+            target_os = Util.HOST_OS
+        # options
+        options = []
+        if 'chrome' in module_name:
+            # --start-maximized doesn't work on darwin
+            if target_os in ['darwin']:
+                options.append('--start-fullscreen')
+            elif target_os in ['windows', 'linux']:
+                options.append('--start-maximized')
+            if target_os != 'chromeos':
+                options.extend(['--disk-cache-dir=/dev/null', '--disk-cache-size=1', '--user-data-dir=%s' % (ScriptRepo.USER_DATA_DIR)])
+            if debug:
+                service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
+            else:
+                service_args = []
+        if options_extra:
+            options.extend(options_extra)
+
+        # module_path
+        if not module_path:
+            out_dir = Util.get_chrome_relative_out_dir('x86_64', Util.HOST_OS)
+            if target_os == 'chromeos':
+                module_path = '/opt/google/chrome/chrome'
+            elif target_os == 'darwin':
+                if module_name == 'chrome':
+                    module_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                elif module_name == 'chrome_canary':
+                    module_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
+            elif target_os == 'linux':
+                if module_name == 'chrome':
+                    module_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome' % out_dir
+                elif module_name == 'chrome_stable':
+                    module_path = '/usr/bin/google-chrome-stable'
+                elif module_name == 'chrome_canary':
+                    module_path = '/usr/bin/google-chrome-unstable'
+            elif target_os == 'windows':
+                if module_name == 'chrome':
+                    module_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome.exe' % out_dir
+                elif module_name == 'chrome_stable':
+                    module_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
+                elif module_name == 'chrome_beta':
+                    module_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
+                elif module_name == 'chrome_dev':
+                    module_path = '%s/Google/Chrome Dev/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
+                elif module_name == 'chrome_canary':
+                    module_path = '%s/../Local/Google/Chrome SxS/Application/chrome.exe' % Util.APPDATA_DIR
+                elif module_name == 'firefox_nightly':
+                    module_path = '%s/Nightly/firefox.exe' % Util.PROGRAMFILES_DIR
+                elif module_name == 'edge':
+                    module_path = 'C:/windows/systemapps/Microsoft.MicrosoftEdge_8wekyb3d8bbwe/MicrosoftEdge.exe'
+        # webdriver_path
+        if not webdriver_path:
+            if target_os == 'chromeos':
+                webdriver_path = '/user/local/chromedriver/chromedriver'
+            elif module_name == 'chrome':
+                if Util.HOST_OS == 'darwin':
+                    chrome_dir = module_path.replace('/Chromium.app/Contents/MacOS/Chromium', '')
+                else:
+                    chrome_dir = os.path.dirname(os.path.realpath(module_path))
+                webdriver_path = chrome_dir + '/chromedriver'
+                webdriver_path = webdriver_path.replace('\\', '/')
+                if host_os == 'windows':
+                    webdriver_path += '.exe'
+            elif target_os in ['darwin', 'linux', 'windows']:
+                if 'chrome' in module_name:
+                    webdriver_path = Util.CHROMEDRIVER_PATH
+                elif 'firefox' in module_name:
+                    webdriver_path = Util.FIREFOXDRIVER_PATH
+                elif 'edge' in module_name:
+                    webdriver_path = Util.EDGEDRIVER_PATH
+        # driver
+        if target_os == 'chromeos':
+            import chromeoswebdriver
+            driver = chromeoswebdriver.chromedriver(extra_chrome_flags=options).driver
+        elif target_os in ['darwin', 'linux', 'windows']:
+            if 'chrome' in module_name:
+                chrome_options = webdriver.ChromeOptions()
+                for option in options:
+                    chrome_options.add_argument(option)
+                chrome_options.binary_location = module_path
+                if debug:
+                    service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
+                else:
+                    service_args = []
+                driver = webdriver.Chrome(executable_path=webdriver_path, chrome_options=chrome_options, service_args=service_args)
+            elif 'firefox' in module_name:
+                from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+                capabilities = DesiredCapabilities.FIREFOX
+                capabilities['marionette'] = True
+                # capabilities['binary'] = module_path
+                driver = webdriver.Firefox(capabilities=capabilities, executable_path=webdriver_path)
+            elif 'edge' in module_name:
+                driver = webdriver.Edge(webdriver_path)
+
+        if not module_path:
+            Util.error('Could not find module at %s' % module_path)
+        else:
+            Util.info('Use module at %s' % module_path)
+        if not webdriver_path:
+            Util.error('Could not find webdriver at %s' % webdriver_path)
+        else:
+            Util.info('Use webdriver at %s' % webdriver_path)
+        if not driver:
+            Util.error('Could not get webdriver')
+
+        return driver
+
+
     MAX_REV = 9999999
     CHROME_BUILD_PATTERN = r'(\d{6}).zip'
     HOST_OS = platform.system().lower()
@@ -391,9 +522,13 @@ class Util:
     CPU_COUNT = multiprocessing.cpu_count()
 
     if HOST_OS == 'windows':
-        PROJECT_DIR = 'd:/workspace/project/readonly'
+        WORKSPACE_DIR = 'd:/workspace'
     else:
-        PROJECT_DIR = '/workspace/project/readonly'
+        WORKSPACE_DIR = '/workspace'
+    TOOL_DIR = '%s/tool' % WORKSPACE_DIR
+    PROJECT_DIR = '%s/project/readonly' % WORKSPACE_DIR
+    PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
+
 
     if HOST_OS == 'windows':
         APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
@@ -407,6 +542,7 @@ class Util:
         ENV_SPLITTER = ':'
         EXEC_SUFFIX = ''
 
+    CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, HOST_OS, EXEC_SUFFIX)
 
 class Timer():
     def __init__(self, microsecond=False):
@@ -437,6 +573,8 @@ class ScriptRepo:
     IGNORE_CHROMIUM_SELFBUILT_DIR = '%s/selfbuilt' % IGNORE_CHROMIUM_DIR
     IGNORE_CHROMIUM_DOWNLOAD_DIR = '%s/download' % IGNORE_CHROMIUM_DIR
     IGNORE_CHROMIUM_BOTO_FILE = '%s/boto.conf' % IGNORE_CHROMIUM_DIR
+
+    USER_DATA_DIR = '%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME)
 
 class Program():
     def __init__(self, parser):
