@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib2
 
 try:
     from selenium import webdriver
@@ -37,6 +38,48 @@ try:
     import win32com.client # install pywin32
 except ImportError:
     pass
+
+def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
+    """Retry calling the decorated function using an exponential backoff.
+
+    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
+    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+
+    :param ExceptionToCheck: the exception to check. may be a tuple of
+        exceptions to check
+    :type ExceptionToCheck: Exception or tuple
+    :param tries: number of times to try (not retry) before giving up
+    :type tries: int
+    :param delay: initial delay between retries in seconds
+    :type delay: int
+    :param backoff: backoff multiplier e.g. value of 2 will double the delay
+        each retry
+    :type backoff: int
+    :param logger: logger to use. If None, print
+    :type logger: logging.Logger instance
+    """
+    def deco_retry(f):
+
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck as e:
+                    msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    if logger:
+                        logger.warning(msg)
+                    else:
+                        print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
 
 class Util:
     @staticmethod
@@ -213,6 +256,19 @@ class Util:
         if value:
             os.environ[env] = value
 
+    # get seconds since 1970-01-01
+    @staticmethod
+    def get_epoch_second():
+        return int(time.time())
+
+    @staticmethod
+    def has_recent_change(file_path, interval=24 * 3600):
+        if Util.get_epoch_second() - os.path.getmtime(file_path) < interval:
+            return True
+        else:
+            return False
+
+
     @staticmethod
     def prepend_path(path):
         paths = Util.get_env('PATH').split(Util.ENV_SPLITTER)
@@ -371,6 +427,11 @@ class Util:
         return s.replace('/', '\\')
 
     @staticmethod
+    @retry(Exception, tries=5, delay=3, backoff=2)
+    def urlopen_with_retry(url):
+        return urllib2.urlopen(url)
+
+    @staticmethod
     def get_chrome_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False):
         relative_out_dir = 'out-%s-%s' % (target_arch, target_os)
         relative_out_dir += '-symbol%s' % symbol_level
@@ -492,9 +553,11 @@ class Util:
 
         return driver
 
+    MYSQL_SERVER = 'wp-27'
 
     MAX_REV = 9999999
     CHROME_BUILD_PATTERN = r'(\d{6}).zip'
+    COMMIT_STR = 'commit (.*)'
     HOST_OS = platform.system().lower()
     HOST_OS_ID = ''
     HOST_OS_RELEASE = '0.0'
@@ -526,9 +589,20 @@ class Util:
     else:
         WORKSPACE_DIR = '/workspace'
     TOOL_DIR = '%s/tool' % WORKSPACE_DIR
+    BACKUP_DIR = '%s/backup' % WORKSPACE_DIR
     PROJECT_DIR = '%s/project/readonly' % WORKSPACE_DIR
+    PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
-
+    PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
+    PROJECT_MESA_DIR = '%s/mesa' % PROJECT_DIR
+    PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
+    PROJECT_TFJS_DIR = '%s/tfjs' % PROJECT_DIR
+    PROJECT_TOOLKIT_DIR = '%s/toolkit' % PROJECT_DIR
+    PROJECT_V8_DIR = '%s/v8' % PROJECT_DIR
+    PROJECT_WASM_DIR = '%s/wasm' % PROJECT_DIR
+    PROJECT_WEBGL_DIR = '%s/WebGL' % PROJECT_DIR
+    PROJECT_WEBBENCH_DIR = '%s/webbench' % PROJECT_DIR
+    PROJECT_WPT_DIR = '%s/web-platform-tests' % PROJECT_DIR
 
     if HOST_OS == 'windows':
         APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
@@ -575,6 +649,8 @@ class ScriptRepo:
     IGNORE_CHROMIUM_BOTO_FILE = '%s/boto.conf' % IGNORE_CHROMIUM_DIR
 
     USER_DATA_DIR = '%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME)
+    W3C_DIR = '%s/w3c' % ROOT_DIR
+    CONTRIB_DIR = '%s/contrib' % ROOT_DIR
 
 class Program():
     def __init__(self, parser):
