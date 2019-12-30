@@ -29,13 +29,21 @@ import subprocess
 import sys
 import threading
 import time
-import urllib2
+
+try:
+    import urllib2
+except ImportError:
+    pass
+
+try:
+    import win32com.client # install pywin32
+except ImportError:
+    pass
 
 try:
     from selenium import webdriver
     from selenium.webdriver.support.ui import WebDriverWait  # noqa: E402
     from selenium.common.exceptions import TimeoutException  # noqa: E402
-    import win32com.client # install pywin32
 except ImportError:
     pass
 
