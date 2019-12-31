@@ -640,10 +640,6 @@ class Util:
         HOST_OS_RELEASE = platform.platform()
     elif HOST_OS == 'darwin':
         HOST_OS_RELEASE = platform.mac_ver()[0]
-    elif HOST_OS == 'linux':
-        dist = platform.dist()
-        HOST_OS_ID = dist[0].lower()
-        HOST_OS_RELEASE = dist[1]
     elif HOST_OS == 'windows':
         HOST_OS_RELEASE = platform.version()
 
