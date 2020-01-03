@@ -42,8 +42,13 @@ except ImportError:
 
 try:
     from selenium import webdriver
-    from selenium.webdriver.support.ui import WebDriverWait  # noqa: E402
-    from selenium.common.exceptions import TimeoutException  # noqa: E402
+    from selenium.common.exceptions import TimeoutException
+    from selenium.webdriver.common.action_chains import ActionChains
+    from selenium.webdriver.common.keys import Keys
+    from selenium.webdriver.support import expected_conditions
+    from selenium.webdriver.support.select import Select
+    from selenium.webdriver.support.ui import WebDriverWait
+
 except ImportError:
     pass
 
@@ -163,6 +168,10 @@ class Util:
         Util._msg(msg, show_strace=True)
         if abort:
             quit(error_code)
+
+    @staticmethod
+    def not_implemented():
+        Util.error('not_implemented() at line %s' % inspect.stack()[1][2])
 
     @staticmethod
     def chdir(dir_path, verbose=False):
@@ -514,12 +523,12 @@ class Util:
         return (tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll)
 
     @staticmethod
-    def get_webdriver(module_name, target_os='', module_path='', webdriver_path='', options_extra=[], debug=False):
+    def get_webdriver(browser_name, browser_path='', browser_options='', webdriver_path='', debug=False, target_os=''):
         if not target_os:
             target_os = Util.HOST_OS
         # options
         options = []
-        if 'chrome' in module_name:
+        if 'chrome' in browser_name:
             # --start-maximized doesn't work on darwin
             if target_os in ['darwin']:
                 options.append('--start-fullscreen')
@@ -531,89 +540,89 @@ class Util:
                 service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
             else:
                 service_args = []
-        if options_extra:
-            options.extend(options_extra)
+        if browser_options:
+            options.extend(browser_options.split(','))
 
-        # module_path
-        if not module_path:
+        # browser_path
+        if not browser_path:
             out_dir = Util.get_chrome_relative_out_dir('x86_64', Util.HOST_OS)
             if target_os == 'chromeos':
-                module_path = '/opt/google/chrome/chrome'
+                browser_path = '/opt/google/chrome/chrome'
             elif target_os == 'darwin':
-                if module_name == 'chrome':
-                    module_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
-                elif module_name == 'chrome_canary':
-                    module_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
+                if browser_name == 'chrome':
+                    browser_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                elif browser_name == 'chrome_canary':
+                    browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
             elif target_os == 'linux':
-                if module_name == 'chrome':
-                    module_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome' % out_dir
-                elif module_name == 'chrome_stable':
-                    module_path = '/usr/bin/google-chrome-stable'
-                elif module_name == 'chrome_canary':
-                    module_path = '/usr/bin/google-chrome-unstable'
+                if browser_name == 'chrome':
+                    browser_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome' % out_dir
+                elif browser_name == 'chrome_stable':
+                    browser_path = '/usr/bin/google-chrome-stable'
+                elif browser_name == 'chrome_canary':
+                    browser_path = '/usr/bin/google-chrome-unstable'
             elif target_os == 'windows':
-                if module_name == 'chrome':
-                    module_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome.exe' % out_dir
-                elif module_name == 'chrome_stable':
-                    module_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
-                elif module_name == 'chrome_beta':
-                    module_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
-                elif module_name == 'chrome_dev':
-                    module_path = '%s/Google/Chrome Dev/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
-                elif module_name == 'chrome_canary':
-                    module_path = '%s/../Local/Google/Chrome SxS/Application/chrome.exe' % Util.APPDATA_DIR
-                elif module_name == 'firefox_nightly':
-                    module_path = '%s/Nightly/firefox.exe' % Util.PROGRAMFILES_DIR
-                elif module_name == 'edge':
-                    module_path = 'C:/windows/systemapps/Microsoft.MicrosoftEdge_8wekyb3d8bbwe/MicrosoftEdge.exe'
+                if browser_name == 'chrome':
+                    browser_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome.exe' % out_dir
+                elif browser_name == 'chrome_stable':
+                    browser_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
+                elif browser_name == 'chrome_beta':
+                    browser_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
+                elif browser_name == 'chrome_dev':
+                    browser_path = '%s/Google/Chrome Dev/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
+                elif browser_name == 'chrome_canary':
+                    browser_path = '%s/../Local/Google/Chrome SxS/Application/chrome.exe' % Util.APPDATA_DIR
+                elif browser_name == 'firefox_nightly':
+                    browser_path = '%s/Nightly/firefox.exe' % Util.PROGRAMFILES_DIR
+                elif browser_name == 'edge':
+                    browser_path = 'C:/windows/systemapps/Microsoft.MicrosoftEdge_8wekyb3d8bbwe/MicrosoftEdge.exe'
         # webdriver_path
         if not webdriver_path:
             if target_os == 'chromeos':
                 webdriver_path = '/user/local/chromedriver/chromedriver'
-            elif module_name == 'chrome':
+            elif browser_name == 'chrome':
                 if Util.HOST_OS == 'darwin':
-                    chrome_dir = module_path.replace('/Chromium.app/Contents/MacOS/Chromium', '')
+                    chrome_dir = browser_path.replace('/Chromium.app/Contents/MacOS/Chromium', '')
                 else:
-                    chrome_dir = os.path.dirname(os.path.realpath(module_path))
+                    chrome_dir = os.path.dirname(os.path.realpath(browser_path))
                 webdriver_path = chrome_dir + '/chromedriver'
                 webdriver_path = webdriver_path.replace('\\', '/')
                 if host_os == 'windows':
                     webdriver_path += '.exe'
             elif target_os in ['darwin', 'linux', 'windows']:
-                if 'chrome' in module_name:
+                if 'chrome' in browser_name:
                     webdriver_path = Util.CHROMEDRIVER_PATH
-                elif 'firefox' in module_name:
+                elif 'firefox' in browser_name:
                     webdriver_path = Util.FIREFOXDRIVER_PATH
-                elif 'edge' in module_name:
+                elif 'edge' in browser_name:
                     webdriver_path = Util.EDGEDRIVER_PATH
         # driver
         if target_os == 'chromeos':
             import chromeoswebdriver
             driver = chromeoswebdriver.chromedriver(extra_chrome_flags=options).driver
         elif target_os in ['darwin', 'linux', 'windows']:
-            if 'chrome' in module_name:
+            if 'chrome' in browser_name:
                 chrome_options = webdriver.ChromeOptions()
                 for option in options:
                     chrome_options.add_argument(option)
-                chrome_options.binary_location = module_path
+                chrome_options.binary_location = browser_path
                 if debug:
                     service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
                 else:
                     service_args = []
                 driver = webdriver.Chrome(executable_path=webdriver_path, chrome_options=chrome_options, service_args=service_args)
-            elif 'firefox' in module_name:
+            elif 'firefox' in browser_name:
                 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
                 capabilities = DesiredCapabilities.FIREFOX
                 capabilities['marionette'] = True
-                # capabilities['binary'] = module_path
+                # capabilities['binary'] = browser_path
                 driver = webdriver.Firefox(capabilities=capabilities, executable_path=webdriver_path)
-            elif 'edge' in module_name:
+            elif 'edge' in browser_name:
                 driver = webdriver.Edge(webdriver_path)
 
-        if not module_path:
-            Util.error('Could not find module at %s' % module_path)
+        if not browser_path:
+            Util.error('Could not find module at %s' % browser_path)
         else:
-            Util.info('Use module at %s' % module_path)
+            Util.info('Use module at %s' % browser_path)
         if not webdriver_path:
             Util.error('Could not find webdriver at %s' % webdriver_path)
         else:
@@ -683,6 +692,8 @@ class Util:
         EXEC_SUFFIX = ''
 
     CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, HOST_OS, EXEC_SUFFIX)
+    INTERNAL_WEBSERVER = 'http://wp-27'
+    INTERNAL_WEBSERVER_WEBBENCH = '%s/workspace/project/readonly/webbench' % INTERNAL_WEBSERVER
 
 class Timer():
     def __init__(self, microsecond=False):
@@ -713,6 +724,8 @@ class ScriptRepo:
     IGNORE_CHROMIUM_SELFBUILT_DIR = '%s/selfbuilt' % IGNORE_CHROMIUM_DIR
     IGNORE_CHROMIUM_DOWNLOAD_DIR = '%s/download' % IGNORE_CHROMIUM_DIR
     IGNORE_CHROMIUM_BOTO_FILE = '%s/boto.conf' % IGNORE_CHROMIUM_DIR
+    IGNORE_WEBMARK_DIR = '%s/webmark' % IGNORE_DIR
+    IGNORE_WEBMARK_RESULT_DIR = '%s/result' % IGNORE_WEBMARK_DIR
 
     USER_DATA_DIR = '%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME)
     W3C_DIR = '%s/w3c' % ROOT_DIR
