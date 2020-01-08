@@ -677,6 +677,7 @@ class Util:
     PROJECT_WASM_DIR = '%s/wasm' % PROJECT_DIR
     PROJECT_WEBGL_DIR = '%s/WebGL' % PROJECT_DIR
     PROJECT_WEBBENCH_DIR = '%s/webbench' % PROJECT_DIR
+    PROJECT_WORK_DIR = '%s/work' % PROJECT_DIR
     PROJECT_WPT_DIR = '%s/web-platform-tests' % PROJECT_DIR
 
     if HOST_OS == 'windows':
