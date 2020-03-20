@@ -669,6 +669,7 @@ class Util:
     PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
+    PROJECT_DEPOT_TOOLS = '%s/depot_tools' % PROJECT_DIR
     PROJECT_MESA_DIR = '%s/mesa' % PROJECT_DIR
     PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
     PROJECT_TFJS_DIR = '%s/tfjs' % PROJECT_DIR
@@ -801,18 +802,13 @@ class Program():
         if verbose:
             cmd += ' -v'
 
-        if Util.HOST_OS == 'windows':
-            depot_tools_path = 'd:/workspace/project/readonly/depot_tools'
-        else:
-            depot_tools_path = '/workspace/project/readonly/depot_tools'
-
-        if not Util.has_depot_tools_in_path() and os.path.exists(depot_tools_path):
-            Util.prepend_path(depot_tools_path)
+        if not Util.has_depot_tools_in_path() and os.path.exists(Util.PROJECT_DEPOT_TOOLS):
+            Util.prepend_path(Util.PROJECT_DEPOT_TOOLS)
 
         result = Util.execute(cmd=cmd)
 
-        if not Util.has_depot_tools_in_path() and os.path.exists(depot_tools_path):
-            Util.remove_path(depot_tools_path)
+        if not Util.has_depot_tools_in_path() and os.path.exists(Util.PROJECT_DEPOT_TOOLS):
+            Util.remove_path(Util.PROJECT_DEPOT_TOOLS)
 
         return result
 
