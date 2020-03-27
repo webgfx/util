@@ -102,13 +102,16 @@ class Util:
             Util.cmd(orig_cmd)
 
         if Util.HOST_OS == 'windows':
-            cmd = '%s 2>&1' % cmd
+            cmd = '%s' % cmd
+            if log_file:
+                cmd += ' >> %s' % log_file
         else:
-            cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
-        if log_file:
-            cmd += ' | tee -a %s' % log_file
-        if not Util.HOST_OS == 'windows':
+            cmd = 'bash -o pipefail -c "%s' % cmd
+            if log_file:
+                cmd += ' | tee -a %s' % log_file
             cmd += '; (exit ${PIPESTATUS})"'
+
+        cmd += ' 2>&1'
 
         if show_duration:
             timer = Timer()
