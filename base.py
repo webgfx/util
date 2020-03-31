@@ -106,6 +106,8 @@ class Util:
         else:
             cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
         if log_file:
+            if Util.HOST_OS == 'windows':
+                Util.prepend_path('%s/tool' % ScriptRepo.UTIL_DIR)
             cmd += ' | tee -a %s' % log_file
         if not Util.HOST_OS == 'windows':
             cmd += '; (exit ${PIPESTATUS})"'
@@ -719,6 +721,7 @@ class ScriptRepo:
         tmp_dir = Util.get_dir(tmp_dir)
     ROOT_DIR = Util.use_slash(tmp_dir)
     TOOL_DIR = '%s/tool' % ROOT_DIR
+    UTIL_DIR = '%s/util' % ROOT_DIR
     IGNORE_DIR = '%s/ignore' % ROOT_DIR
     IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
     IGNORE_TIMESTAMP_DIR = '%s/timestamp' % IGNORE_DIR
