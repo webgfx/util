@@ -671,6 +671,7 @@ class Util:
     PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
+    PROJECT_WEBGPU_DIR = '%s/gpuweb' % PROJECT_DIR
     PROJECT_DEPOT_TOOLS = '%s/depot_tools' % PROJECT_DIR
     PROJECT_MESA_DIR = '%s/mesa' % PROJECT_DIR
     PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
