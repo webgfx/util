@@ -106,8 +106,6 @@ class Util:
         else:
             cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
         if log_file:
-            if Util.HOST_OS == 'windows':
-                Util.prepend_path('%s/tool' % ScriptRepo.UTIL_DIR)
             cmd += ' | tee -a %s' % log_file
         if not Util.HOST_OS == 'windows':
             cmd += '; (exit ${PIPESTATUS})"'
@@ -665,7 +663,6 @@ class Util:
         WORKSPACE_DIR = 'd:/workspace'
     else:
         WORKSPACE_DIR = '/workspace'
-    TOOL_DIR = '%s/tool' % WORKSPACE_DIR
     BACKUP_DIR = '%s/backup' % WORKSPACE_DIR
     PROJECT_DIR = '%s/project/readonly' % WORKSPACE_DIR
     PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
@@ -696,7 +693,7 @@ class Util:
         ENV_SPLITTER = ':'
         EXEC_SUFFIX = ''
 
-    CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, HOST_OS, EXEC_SUFFIX)
+    CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (SciptRepo.TOOL_DIR, HOST_OS, EXEC_SUFFIX)
     INTERNAL_WEBSERVER = 'http://wp-27'
     INTERNAL_WEBSERVER_WEBBENCH = '%s/workspace/project/readonly/webbench' % INTERNAL_WEBSERVER
 
@@ -721,8 +718,11 @@ class ScriptRepo:
     while not os.path.exists(tmp_dir + '/.git') or os.path.basename(tmp_dir) == 'util':
         tmp_dir = Util.get_dir(tmp_dir)
     ROOT_DIR = Util.use_slash(tmp_dir)
-    TOOL_DIR = '%s/tool' % ROOT_DIR
     UTIL_DIR = '%s/util' % ROOT_DIR
+    TOOL_DIR = '%s/tool' % UTIL_DIR
+    if Util.HOST_OS == 'windows':
+        Util.prepend_path(ScriptRepo.TOOL_DIR)
+
     IGNORE_DIR = '%s/ignore' % ROOT_DIR
     IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
     IGNORE_TIMESTAMP_DIR = '%s/timestamp' % IGNORE_DIR
