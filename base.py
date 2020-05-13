@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import zipfile
 
 try:
     import urllib2
@@ -304,6 +305,13 @@ class Util:
                 paths.remove(tmp_path)
 
         Util.set_env('PATH', Util.ENV_SPLITTER.join(paths))
+
+    @staticmethod
+    def del_filetype_in_dir(dir_path, filetype):
+        for root, dirs, files in os.walk(dir_path):
+            for name in files:
+                if (name.endswith('.%s' % filetype)):
+                    os.remove(os.path.join(root, name))
 
     @staticmethod
     def has_depot_tools_in_path():
@@ -590,7 +598,7 @@ class Util:
                     webdriver_path += '.exe'
             elif target_os in ['darwin', 'linux', 'windows']:
                 if 'chrome' in browser_name:
-                    webdriver_path = Util.CHROMEDRIVER_PATH
+                    webdriver_path = ScriptRepo.CHROMEDRIVER_PATH
                 elif 'firefox' in browser_name:
                     webdriver_path = Util.FIREFOXDRIVER_PATH
                 elif 'edge' in browser_name:
@@ -693,7 +701,6 @@ class Util:
         ENV_SPLITTER = ':'
         EXEC_SUFFIX = ''
 
-    CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (SciptRepo.TOOL_DIR, HOST_OS, EXEC_SUFFIX)
     INTERNAL_WEBSERVER = 'http://wp-27'
     INTERNAL_WEBSERVER_WEBBENCH = '%s/workspace/project/readonly/webbench' % INTERNAL_WEBSERVER
 
@@ -721,7 +728,7 @@ class ScriptRepo:
     UTIL_DIR = '%s/util' % ROOT_DIR
     TOOL_DIR = '%s/tool' % UTIL_DIR
     if Util.HOST_OS == 'windows':
-        Util.prepend_path(ScriptRepo.TOOL_DIR)
+        Util.prepend_path(TOOL_DIR)
 
     IGNORE_DIR = '%s/ignore' % ROOT_DIR
     IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
@@ -736,6 +743,7 @@ class ScriptRepo:
     USER_DATA_DIR = '%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME)
     W3C_DIR = '%s/w3c' % ROOT_DIR
     CONTRIB_DIR = '%s/contrib' % ROOT_DIR
+    CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX)
 
 class Program():
     def __init__(self, parser):
