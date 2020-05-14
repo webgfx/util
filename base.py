@@ -672,7 +672,7 @@ class Util:
     else:
         WORKSPACE_DIR = '/workspace'
     BACKUP_DIR = '%s/backup' % WORKSPACE_DIR
-    PROJECT_DIR = '%s/project/readonly' % WORKSPACE_DIR
+    PROJECT_DIR = '%s/project' % WORKSPACE_DIR
     PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
@@ -702,7 +702,7 @@ class Util:
         EXEC_SUFFIX = ''
 
     INTERNAL_WEBSERVER = 'http://wp-27'
-    INTERNAL_WEBSERVER_WEBBENCH = '%s/workspace/project/readonly/webbench' % INTERNAL_WEBSERVER
+    INTERNAL_WEBSERVER_WEBBENCH = '%s/%s/webbench' % (INTERNAL_WEBSERVER, PROJECT_DIR)
 
 class Timer():
     def __init__(self, microsecond=False):
