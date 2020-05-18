@@ -558,19 +558,19 @@ class Util:
                 browser_path = '/opt/google/chrome/chrome'
             elif target_os == 'darwin':
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                    browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
                 elif browser_name == 'chrome_canary':
                     browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
             elif target_os == 'linux':
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome' % out_dir
+                    browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/chrome' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '/usr/bin/google-chrome-stable'
                 elif browser_name == 'chrome_canary':
                     browser_path = '/usr/bin/google-chrome-unstable'
             elif target_os == 'windows':
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_DIR + '/src/%s/Release/chrome.exe' % out_dir
+                    browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/chrome.exe' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
                 elif browser_name == 'chrome_beta':
@@ -675,6 +675,7 @@ class Util:
     PROJECT_DIR = '%s/project' % WORKSPACE_DIR
     PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
+    PROJECT_CHROME_SRC_DIR = '%s/src' % PROJECT_CHROME_DIR
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
     PROJECT_WEBGPU_DIR = '%s/gpuweb' % PROJECT_DIR
     PROJECT_DEPOT_TOOLS = '%s/depot_tools' % PROJECT_DIR
