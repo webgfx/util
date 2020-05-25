@@ -594,7 +594,7 @@ class Util:
                     chrome_dir = os.path.dirname(os.path.realpath(browser_path))
                 webdriver_path = chrome_dir + '/chromedriver'
                 webdriver_path = webdriver_path.replace('\\', '/')
-                if host_os == 'windows':
+                if Util.HOST_OS == 'windows':
                     webdriver_path += '.exe'
             elif target_os in ['darwin', 'linux', 'windows']:
                 if 'chrome' in browser_name:
@@ -639,6 +639,180 @@ class Util:
             Util.error('Could not get webdriver')
 
         return driver
+
+    @staticmethod
+    def get_md5(path, verbose=False):
+        if verbose:
+            info('Calculating md5 of %s' % path)
+
+        if Util.need_sudo(path):
+            name = os.path.basename(path)
+            Util.execute('sudo cp %s /tmp' % path, show_cmd=False)
+            Util.execute('sudo chmod +r /tmp/%s' % name, show_cmd=False)
+            md5 = hashlib.md5(open('/tmp/%s' % name, 'rb').read()).hexdigest()
+            Util.execute('sudo rm /tmp/%s' % name, show_cmd=False)
+        else:
+            md5 = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        return md5
+
+    @staticmethod
+    def has_path(path):
+        if Util.need_sudo(path):
+            result = Util.execute('sudo ls %s' % path, show_cmd=False)
+            if result[0] == 0:
+                return True
+            else:
+                return False
+        else:
+            return os.path.exists(path)
+
+    @staticmethod
+    def has_link(path):
+        if Util.need_sudo(path) or Util.HOST_OS == 'windows':
+            cmd = 'file "%s"' % path
+            if Util.need_sudo(path):
+                cmd = 'sudo ' + cmd
+            result = Util.execute(cmd, show_cmd=False, return_out=True)
+            if re.search('symbolic link to', result[1]):
+                return True
+            else:
+                return False
+        else:
+            return os.path.islink(path)
+
+    @staticmethod
+    def use_drive(s):
+        m = re.match('/(.)/', s)
+        if m:
+            drive = m.group(1)
+            s = s.replace('/%s/' % drive, '%s:/' % drive.capitalize())
+        return s
+
+    # get the real file from symbolic link
+    @staticmethod
+    def get_link(path):
+        if not Util.has_link(path):
+            error('%s is not a symbolic link' % path)
+
+        if Util.need_sudo(path) or Util.HOST_OS == 'windows':
+            cmd = 'file "%s"' % path
+            if Util.need_sudo(path):
+                cmd = 'sudo ' + cmd
+            result = Util.execute(cmd, show_cmd=False, return_out=True)
+            match = re.search('symbolic link to (.*)', result[1])
+            link = match.group(1).strip()
+            if Util.HOST_OS == 'windows':
+                link = Util.use_drive(link)
+            return link
+        else:
+            return os.readlink(path)  # pylint: disable=E1101
+
+    @staticmethod
+    def need_sudo(path):
+        if re.match('/var', path):
+            return True
+        elif re.match('/etc/apache2', path):
+            return True
+        else:
+            return False
+
+    # return True if there is a real update
+    # is_sylk: If true, just copy as a symbolic link
+    # dir_xxx means directory
+    # name_xxx means file name
+    # path_xxx means full path of file
+    # need_bk means if it needs .bk file
+    @staticmethod
+    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_sylk=False, need_bk=True):
+        if not os.path.exists(dest_dir):
+            # we do not warn here as it's a normal case
+            # warning(dest_dir + ' does not exist')
+            return False
+
+        if not dest_name:
+            dest_name = src_name
+        path_dest = dest_dir + '/' + dest_name
+        path_dest_bk = path_dest + '.bk'
+
+        # hack the src_name to support machine specific config
+        # For example, wp-27-hostapd.conf
+        # src_name is changed here, so we can't put this before path_dest definition
+        if os.path.exists(src_dir + '/' + Util.HOST_NAME + '-' + src_name):
+            src_name = Util.HOST_NAME + '-' + src_name
+        path_src = src_dir + '/' + src_name
+        if not os.path.exists(path_src):
+            Util.warning(path_src + ' does not exist')
+            return False
+
+        need_copy = False
+        need_bk_tmp = False
+        has_update = False
+
+        if not Util.has_path(path_dest) or Util.has_link(path_dest) != is_sylk:
+            need_copy = True
+            need_bk_tmp = True
+            has_update = True
+        elif is_sylk:  # both are symbolic link
+            if Util.get_link(path_dest) != path_src:
+                need_copy = True
+                need_bk_tmp = True
+                has_update = True
+            else:  # same link
+                if not Util.has_path(path_dest_bk):
+                    need_bk_tmp = True
+                    has_update = True
+                else:
+                    if Util.get_md5(path_dest) != Util.get_md5(path_dest_bk):
+                        need_bk_tmp = True
+                        has_update = True
+        else:  # both are real files
+            if not os.path.exists(path_dest_bk):
+                need_bk_tmp = True
+
+            if Util.get_md5(path_dest) != Util.get_md5(path_src):
+                need_copy = True
+                need_bk_tmp = True
+                has_update = True
+        # print need_copy, need_bk_tmp, has_update
+
+        if re.search('chroot/sbin', dest_dir):
+            need_sudo = True
+        elif re.search(Util.HOME_DIR, dest_dir) or re.search(Util.WORKSPACE_DIR, dest_dir):
+            need_sudo = False
+        else:
+            need_sudo = True
+
+        if need_bk_tmp and need_bk:
+            cmd = 'rm -f "%s"' % path_dest_bk
+            if need_sudo:
+                cmd = 'sudo ' + cmd
+            Util.execute(cmd, show_cmd=False, exit_on_error=False)
+            cmd = 'cp -f "%s" "%s"' % (path_dest, path_dest_bk)
+            if need_sudo:
+                cmd = 'sudo ' + cmd
+            Util.execute(cmd, show_cmd=False, exit_on_error=False)
+
+        if need_copy:
+            cmd = 'rm "%s"' % path_dest
+            if need_sudo:
+                cmd = 'sudo ' + cmd
+            Util.execute(cmd, show_cmd=False, exit_on_error=False)
+
+            if is_sylk:
+                if Util.HOST_OS == 'windows':
+                    cmd = 'mklink "%s" "%s"' % (path_dest, path_src)
+                else:
+                    cmd = 'ln -s ' + path_src + ' ' + path_dest
+            else:
+                cmd = 'cp -rf ' + path_src + ' ' + path_dest
+            if need_sudo:
+                cmd = 'sudo ' + cmd
+            result = Util.execute(cmd, show_cmd=False)
+            if result[0]:
+                error('Failed to execute %s. You may need to run cmd with administrator priviledge' % cmd)
+
+        return has_update
+
 
     MYSQL_SERVER = 'wp-27'
 
@@ -689,6 +863,8 @@ class Util:
     PROJECT_WEBBENCH_DIR = '%s/webbench' % PROJECT_DIR
     PROJECT_WORK_DIR = '%s/work' % PROJECT_DIR
     PROJECT_WPT_DIR = '%s/web-platform-tests' % PROJECT_DIR
+
+    HOME_DIR = use_slash.__func__(expanduser("~"))
 
     if HOST_OS == 'windows':
         APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
