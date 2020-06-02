@@ -456,7 +456,7 @@ class Util:
         return urllib2.urlopen(url)
 
     @staticmethod
-    def get_chrome_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False):
+    def get_chrome_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False, dcheck=False):
         relative_out_dir = 'out-%s-%s' % (target_arch, target_os)
         relative_out_dir += '-symbol%s' % symbol_level
 
@@ -464,6 +464,11 @@ class Util:
             relative_out_dir += '-nocomponent'
         else:
             relative_out_dir += '-component'
+
+        if dcheck:
+            relative_out_dir += '-dcheck'
+        else:
+            relative_out_dir += '-nodcheck'
 
         return relative_out_dir
 
@@ -982,7 +987,7 @@ class Program():
         if extra_cmd:
             cmd += ' ' + extra_cmd
         if cmd_type == 'sync':
-            cmd += ' -n -D -R --break_repo_locks --delete_unversioned_trees'
+            cmd += ' -n -D -R --delete_unversioned_trees'
 
         if not job_count:
             job_count = Util.CPU_COUNT
