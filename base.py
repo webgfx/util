@@ -273,6 +273,8 @@ class Util:
     def set_env(env, value):
         if value:
             os.environ[env] = value
+        else:
+            del os.environ[env]
 
     # get seconds since 1970-01-01
     @staticmethod
@@ -328,6 +330,11 @@ class Util:
         https_proxy = 'https://%s:%s' % (address, port)
         Util.set_env('http_proxy', http_proxy)
         Util.set_env('https_proxy', https_proxy)
+
+    @staticmethod
+    def clear_proxy():
+        Util.set_env('http_proxy', '')
+        Util.set_env('https_proxy', '')
 
     @staticmethod
     def get_caller_name():
@@ -644,6 +651,51 @@ class Util:
             Util.error('Could not get webdriver')
 
         return driver
+
+    @staticmethod
+    def backup_gn_target(repo_dir, out_dir, backup_dir, targets, out_dir_only=False, target_dict={}, need_symbol=False):
+        if os.path.exists(backup_dir):
+            Util.info('Backup folder "%s" alreadys exists' % backup_dir)
+            return
+            #os.rename(backup_dir, '%s-%s' % (backup_dir, Util.get_datetime()))
+
+        Util.chdir(repo_dir)
+        for key, value in target_dict.items():
+            if key in targets:
+                targets[targets.index(key)] = value
+
+        tmp_files = []
+        for target in targets:
+            target_files = Util.execute('gn desc %s %s runtime_deps' % (out_dir, target), return_out=True)[1].rstrip('\n').split('\n')
+            tmp_files = Util.union_list(tmp_files, target_files)
+
+        exclude_files = ['gen/', 'angledata/', 'pyproto/', 'libVkLayer/', 'initialexe/']
+        src_files = []
+        for tmp_file in tmp_files:
+            if not need_symbol and tmp_file.endswith('.pdb'):
+                continue
+
+            if tmp_file.startswith('./'):
+                tmp_file = tmp_file[2:]
+
+            for exclude_file in exclude_files:
+                if tmp_file.startswith(exclude_file):
+                    break
+            else:
+                src_files.append(tmp_file)
+
+        for src_file in src_files:
+            src_file = '%s/%s' % (out_dir, src_file)
+            dst_dir = '%s/%s' % (backup_dir, src_file)
+            if out_dir_only:
+                dst_dir = dst_dir.replace('%s/' % out_dir, '')
+            Util.ensure_dir(os.path.dirname(dst_dir))
+            if os.path.isdir(src_file):
+                dst_dir = os.path.dirname(os.path.dirname(dst_dir))
+            Util.execute('cp -rf %s %s' % (src_file, dst_dir), show_cmd=True)
+
+            # permission denied
+            #shutil.copyfile(file, dst_dir)
 
     @staticmethod
     def get_md5(path, verbose=False):
