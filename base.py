@@ -102,13 +102,13 @@ class Util:
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        if Util.HOST_OS == 'windows':
+        if Util.HOST_OS == Util.WINDOWS:
             cmd = '%s 2>&1' % cmd
         else:
             cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
         if log_file:
             cmd += ' | tee -a %s' % log_file
-        if not Util.HOST_OS == 'windows':
+        if not Util.HOST_OS == Util.WINDOWS:
             cmd += '; (exit ${PIPESTATUS})"'
 
         if show_duration:
@@ -442,7 +442,7 @@ class Util:
 
     @staticmethod
     def get_quotation():
-        if Util.HOST_OS == 'windows':
+        if Util.HOST_OS == Util.WINDOWS:
             quotation = '\"'
         else:
             quotation = '\''
@@ -550,11 +550,11 @@ class Util:
         options = []
         if 'chrome' in browser_name:
             # --start-maximized doesn't work on darwin
-            if target_os in ['darwin']:
+            if target_os in [Util.DARWIN]:
                 options.append('--start-fullscreen')
-            elif target_os in ['windows', 'linux']:
+            elif target_os in [Util.WINDOWS, Util.LINUX]:
                 options.append('--start-maximized')
-            if target_os != 'chromeos':
+            if target_os != Util.CHROMEOS:
                 options.extend(['--disk-cache-dir=/dev/null', '--disk-cache-size=1', '--user-data-dir=%s' % (ScriptRepo.USER_DATA_DIR)])
             if debug:
                 service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
@@ -566,21 +566,21 @@ class Util:
         # browser_path
         if not browser_path:
             out_dir = Util.get_chrome_relative_out_dir('x86_64', Util.HOST_OS)
-            if target_os == 'chromeos':
+            if target_os == Util.CHROMEOS:
                 browser_path = '/opt/google/chrome/chrome'
-            elif target_os == 'darwin':
+            elif target_os == Util.DARWIN:
                 if browser_name == 'chrome':
                     browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
                 elif browser_name == 'chrome_canary':
                     browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
-            elif target_os == 'linux':
+            elif target_os == Util.LINUX:
                 if browser_name == 'chrome':
                     browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/chrome' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '/usr/bin/google-chrome-stable'
                 elif browser_name == 'chrome_canary':
                     browser_path = '/usr/bin/google-chrome-unstable'
-            elif target_os == 'windows':
+            elif target_os == Util.WINDOWS:
                 if browser_name == 'chrome':
                     browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/chrome.exe' % out_dir
                 elif browser_name == 'chrome_stable':
@@ -597,18 +597,18 @@ class Util:
                     browser_path = 'C:/windows/systemapps/Microsoft.MicrosoftEdge_8wekyb3d8bbwe/MicrosoftEdge.exe'
         # webdriver_path
         if not webdriver_path:
-            if target_os == 'chromeos':
+            if target_os == Util.CHROMEOS:
                 webdriver_path = '/user/local/chromedriver/chromedriver'
             elif browser_name == 'chrome':
-                if Util.HOST_OS == 'darwin':
+                if Util.HOST_OS == Util.DARWIN:
                     chrome_dir = browser_path.replace('/Chromium.app/Contents/MacOS/Chromium', '')
                 else:
                     chrome_dir = os.path.dirname(os.path.realpath(browser_path))
                 webdriver_path = chrome_dir + '/chromedriver'
                 webdriver_path = webdriver_path.replace('\\', '/')
-                if Util.HOST_OS == 'windows':
+                if Util.HOST_OS == Util.WINDOWS:
                     webdriver_path += '.exe'
-            elif target_os in ['darwin', 'linux', 'windows']:
+            elif target_os in [Util.DARWIN, Util.LINUX, Util.WINDOWS]:
                 if 'chrome' in browser_name:
                     webdriver_path = ScriptRepo.CHROMEDRIVER_PATH
                 elif 'firefox' in browser_name:
@@ -616,10 +616,10 @@ class Util:
                 elif 'edge' in browser_name:
                     webdriver_path = Util.EDGEDRIVER_PATH
         # driver
-        if target_os == 'chromeos':
+        if target_os == Util.CHROMEOS:
             import chromeoswebdriver
             driver = chromeoswebdriver.chromedriver(extra_chrome_flags=options).driver
-        elif target_os in ['darwin', 'linux', 'windows']:
+        elif target_os in [Util.DARWIN, Util.LINUX, Util.WINDOWS]:
             if 'chrome' in browser_name:
                 chrome_options = webdriver.ChromeOptions()
                 for option in options:
@@ -653,7 +653,7 @@ class Util:
         return driver
 
     @staticmethod
-    def backup_gn_target(repo_dir, out_dir, backup_dir, targets, out_dir_only=False, target_dict={}, need_symbol=False):
+    def backup_gn_target(repo_dir, out_dir, backup_dir, targets, out_dir_only=False, target_dict={}, need_symbol=False, target_os=''):
         if os.path.exists(backup_dir):
             Util.info('Backup folder "%s" alreadys exists' % backup_dir)
             return
@@ -677,6 +677,9 @@ class Util:
 
             if tmp_file.startswith('./'):
                 tmp_file = tmp_file[2:]
+
+            if target_os == Util.CHROMEOS and not tmp_file.startswith('../../'):
+                continue
 
             for exclude_file in exclude_files:
                 if tmp_file.startswith(exclude_file):
@@ -725,7 +728,7 @@ class Util:
 
     @staticmethod
     def has_link(path):
-        if Util.need_sudo(path) or Util.HOST_OS == 'windows':
+        if Util.need_sudo(path) or Util.HOST_OS == Util.WINDOWS:
             cmd = 'file "%s"' % path
             if Util.need_sudo(path):
                 cmd = 'sudo ' + cmd
@@ -751,14 +754,14 @@ class Util:
         if not Util.has_link(path):
             error('%s is not a symbolic link' % path)
 
-        if Util.need_sudo(path) or Util.HOST_OS == 'windows':
+        if Util.need_sudo(path) or Util.HOST_OS == Util.WINDOWS:
             cmd = 'file "%s"' % path
             if Util.need_sudo(path):
                 cmd = 'sudo ' + cmd
             result = Util.execute(cmd, show_cmd=False, return_out=True)
             match = re.search('symbolic link to (.*)', result[1])
             link = match.group(1).strip()
-            if Util.HOST_OS == 'windows':
+            if Util.HOST_OS == Util.WINDOWS:
                 link = Util.use_drive(link)
             return link
         else:
@@ -856,7 +859,7 @@ class Util:
             Util.execute(cmd, show_cmd=False, exit_on_error=False)
 
             if is_sylk:
-                if Util.HOST_OS == 'windows':
+                if Util.HOST_OS == Util.WINDOWS:
                     cmd = 'mklink "%s" "%s"' % (path_dest, path_src)
                 else:
                     cmd = 'ln -s ' + path_src + ' ' + path_dest
@@ -872,33 +875,37 @@ class Util:
 
 
     MYSQL_SERVER = 'wp-27'
-
+    WINDOWS = 'windows'
+    LINUX = 'linux'
+    DARWIN = 'darwin'
+    CHROMEOS = 'chromeos'
+    ANDROID = 'android'
     MAX_REV = 9999999
-    CHROME_BUILD_PATTERN = r'(\d{6}).zip'
+    CHROME_BUILD_PATTERN = r'(\d{6})'
     COMMIT_STR = 'commit (.*)'
     HOST_OS = platform.system().lower()
     HOST_OS_ID = ''
     HOST_OS_RELEASE = '0.0'
-    if HOST_OS == 'linux':
+    if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
-        if re.search('CHROMEOS', result[1]):
-            HOST_OS = 'chromeos'
+        if re.search(CHROMEOS, result[1]):
+            HOST_OS = CHROMEOS
 
-    if HOST_OS == 'chromeos':
+    if HOST_OS == CHROMEOS:
         HOST_OS_RELEASE = platform.platform()
-    elif HOST_OS == 'darwin':
+    elif HOST_OS == DARWIN:
         HOST_OS_RELEASE = platform.mac_ver()[0]
-    elif HOST_OS == 'windows':
+    elif HOST_OS == WINDOWS:
         HOST_OS_RELEASE = platform.version()
 
     HOST_NAME = socket.gethostname()
-    if HOST_OS == 'windows':
+    if HOST_OS == WINDOWS:
         USER_NAME = os.getenv('USERNAME')
     else:
         USER_NAME = os.getenv('USER')
     CPU_COUNT = multiprocessing.cpu_count()
 
-    if HOST_OS == 'windows':
+    if HOST_OS == WINDOWS:
         WORKSPACE_DIR = 'd:/workspace'
     else:
         WORKSPACE_DIR = '/workspace'
@@ -923,15 +930,15 @@ class Util:
 
     HOME_DIR = use_slash.__func__(expanduser("~"))
 
-    if HOST_OS == 'windows':
+    if HOST_OS == WINDOWS:
         APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
         PROGRAMFILES_DIR = use_slash.__func__(os.getenv('PROGRAMFILES'))
         PROGRAMFILESX86_DIR = use_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
 
-    if HOST_OS == 'windows':
+    if HOST_OS == WINDOWS:
         ENV_SPLITTER = ';'
         EXEC_SUFFIX = '.exe'
-    elif HOST_OS in ['linux', 'darwin', 'chromeos']:
+    elif HOST_OS in [LINUX, DARWIN, CHROMEOS]:
         ENV_SPLITTER = ':'
         EXEC_SUFFIX = ''
 
@@ -961,7 +968,7 @@ class ScriptRepo:
     ROOT_DIR = Util.use_slash(tmp_dir)
     UTIL_DIR = '%s/util' % ROOT_DIR
     TOOL_DIR = '%s/tool' % UTIL_DIR
-    if Util.HOST_OS == 'windows':
+    if Util.HOST_OS == Util.WINDOWS:
         Util.prepend_path(TOOL_DIR)
 
     IGNORE_DIR = '%s/ignore' % ROOT_DIR
@@ -986,6 +993,9 @@ class Program():
         parser.add_argument('--log-file', dest='log_file', help='log file')
         parser.add_argument('--fixed-timestamp', dest='fixed_timestamp', help='fixed timestamp for test sake. We may run multiple tests and results are in same dir', action='store_true')
         parser.add_argument('--proxy', dest='proxy', help='proxy')
+        parser.add_argument('--target-arch', dest='target_arch', help='target arch', choices=['x86', 'arm', 'x86_64', 'arm64'], default='default')
+        parser.add_argument('--target-os', dest='target_os', help='target os, choices can be android, linux, chromeos, windows, darwin', default='default')
+
 
         args = parser.parse_args()
 
