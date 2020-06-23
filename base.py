@@ -718,7 +718,7 @@ class Util:
     @staticmethod
     def has_path(path):
         if Util.need_sudo(path):
-            result = Util.execute('sudo ls %s' % path, show_cmd=False)
+            result = Util.execute('sudo ls %s' % path, show_cmd=False, exit_on_error=False)
             if result[0] == 0:
                 return True
             else:
