@@ -915,7 +915,6 @@ class Util:
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
     PROJECT_CHROME_SRC_DIR = '%s/src' % PROJECT_CHROME_DIR
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
-    PROJECT_WEBGPU_DIR = '%s/gpuweb' % PROJECT_DIR
     PROJECT_DEPOT_TOOLS = '%s/depot_tools' % PROJECT_DIR
     PROJECT_MESA_DIR = '%s/mesa' % PROJECT_DIR
     PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
@@ -924,6 +923,8 @@ class Util:
     PROJECT_V8_DIR = '%s/v8' % PROJECT_DIR
     PROJECT_WASM_DIR = '%s/wasm' % PROJECT_DIR
     PROJECT_WEBGL_DIR = '%s/WebGL' % PROJECT_DIR
+    PROJECT_WEBGPUCTS_DIR = '%s/webgpucts' % PROJECT_DIR
+    PROJECT_WEBGPUSPEC_DIR = '%s/webgpuspec' % PROJECT_DIR
     PROJECT_WEBBENCH_DIR = '%s/webbench' % PROJECT_DIR
     PROJECT_WORK_DIR = '%s/work' % PROJECT_DIR
     PROJECT_WPT_DIR = '%s/web-platform-tests' % PROJECT_DIR
