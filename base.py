@@ -463,7 +463,7 @@ class Util:
         return urllib2.urlopen(url)
 
     @staticmethod
-    def get_chrome_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False, dcheck=False):
+    def get_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False, dcheck=False):
         relative_out_dir = 'out-%s-%s' % (target_arch, target_os)
         relative_out_dir += '-symbol%s' % symbol_level
 
@@ -565,7 +565,7 @@ class Util:
 
         # browser_path
         if not browser_path:
-            out_dir = Util.get_chrome_relative_out_dir('x86_64', Util.HOST_OS)
+            out_dir = Util.get_relative_out_dir('x86_64', Util.HOST_OS)
             if target_os == Util.CHROMEOS:
                 browser_path = '/opt/google/chrome/chrome'
             elif target_os == Util.DARWIN:
@@ -1040,6 +1040,10 @@ class Program():
         self.log_file = log_file
         self.proxy_address = proxy_address
         self.proxy_port = proxy_port
+        if args.target_arch == 'default':
+            self.target_arch = 'x86_64'
+        if args.target_os == 'default':
+            self.target_os = Util.HOST_OS
 
     def execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, return_out=return_out, show_duration=show_duration, dryrun=dryrun, log_file=self.log_file)
