@@ -411,7 +411,7 @@ class Util:
         return r'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
 
     @staticmethod
-    def get_rev_dir(parent_dir, type, rev):
+    def get_rev_dir(dir, type, rev):
         if type == 'mesa':
             rev_pattern = Util.get_mesa_build_pattern(rev)
         elif type == 'chrome':
@@ -420,7 +420,7 @@ class Util:
         if rev == 'latest':
             rev = -1
             rev_dir = ''
-            files = os.listdir(parent_dir)
+            files = os.listdir(dir)
             for file in files:
                 match = re.search(rev_pattern, file)
                 if match:
@@ -431,7 +431,7 @@ class Util:
 
             return (rev_dir, rev)
         else:
-            files = os.listdir(parent_dir)
+            files = os.listdir(dir)
             for file in files:
                 match = re.match(rev_pattern, file)
                 if match:
@@ -439,6 +439,16 @@ class Util:
                     return (rev_dir, rev)
             else:
                 Util.error('Could not find mesa build %s' % rev)
+
+    @staticmethod
+    def set_mesa(dir, rev):
+        if rev == 'system':
+            Util.ensure_pkg('mesa-vulkan-drivers')
+            Util.info('Use system Mesa')
+        else:
+            (rev_dir, rev) = Util.get_rev_dir(dir, 'mesa', rev)
+            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % rev_dir)
+            Util.info('Use mesa at %s' % rev_dir)
 
     @staticmethod
     def get_quotation():
@@ -871,7 +881,6 @@ class Util:
 
         return has_update
 
-
     MYSQL_SERVER = 'wp-27'
     WINDOWS = 'windows'
     LINUX = 'linux'
@@ -915,6 +924,7 @@ class Util:
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
     PROJECT_DEPOT_TOOLS = '%s/depot_tools' % PROJECT_DIR
     PROJECT_MESA_DIR = '%s/mesa' % PROJECT_DIR
+    PROJECT_MESA_BACKUP_DIR = '%s/backup' % PROJECT_MESA_DIR
     PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
     PROJECT_TFJS_DIR = '%s/tfjs' % PROJECT_DIR
     PROJECT_TOOLKIT_DIR = '%s/toolkit' % PROJECT_DIR
