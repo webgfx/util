@@ -441,14 +441,23 @@ class Util:
                 Util.error('Could not find mesa build %s' % rev)
 
     @staticmethod
-    def set_mesa(dir, rev):
+    def set_mesa(dir, rev, type='iris'):
         if rev == 'system':
             Util.ensure_pkg('mesa-vulkan-drivers')
             Util.info('Use system Mesa')
         else:
-            (rev_dir, rev) = Util.get_rev_dir(dir, 'mesa', rev)
-            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % rev_dir)
-            Util.info('Use mesa at %s' % rev_dir)
+            (rev_dir, _) = Util.get_rev_dir(dir, 'mesa', rev)
+            mesa_dir = '%s/%s' % (dir, rev_dir)
+            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir)
+            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir)
+            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir)
+
+            if type == 'iris':
+                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'iris')
+            else:
+                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
+
+            Util.info('Use mesa at %s' % mesa_dir)
 
     @staticmethod
     def get_quotation():
