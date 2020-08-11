@@ -397,69 +397,6 @@ class Util:
             smtp.quit()
 
     @staticmethod
-    def get_working_dir_commit_info(src_dir):
-        Util.chdir(src_dir)
-        cmd = 'git show -s --format=%ci -1'
-        result = Util.execute(cmd, return_out=True)
-        date = result[1].split(' ')[0].replace('-', '')
-        return [date]
-
-    @staticmethod
-    def get_mesa_build_pattern(rev='latest'):
-        if rev == 'latest':
-            rev = '(.*)'
-        return r'mesa-master-release-\d{8}-%s-[a-z0-9]{40}(?<!tar.gz)$' % rev
-
-    @staticmethod
-    def get_rev_dir(dir, type, rev):
-        if type == 'mesa':
-            rev_pattern = Util.get_mesa_build_pattern(rev)
-        elif type == 'chrome':
-            rev_pattern = Util.CHROME_BUILD_PATTERN
-
-        if rev == 'latest':
-            rev = -1
-            rev_dir = ''
-            files = os.listdir(dir)
-            for file in files:
-                match = re.search(rev_pattern, file)
-                if match:
-                    tmp_rev = int(match.group(1))
-                    if tmp_rev > rev:
-                        rev_dir = file
-                        rev = tmp_rev
-
-            return (rev_dir, rev)
-        else:
-            files = os.listdir(dir)
-            for file in files:
-                match = re.match(rev_pattern, file)
-                if match:
-                    rev_dir = file
-                    return (rev_dir, rev)
-            else:
-                Util.error('Could not find mesa build %s' % rev)
-
-    @staticmethod
-    def set_mesa(dir, rev, type='iris'):
-        if rev == 'system':
-            Util.ensure_pkg('mesa-vulkan-drivers')
-            Util.info('Use system Mesa')
-        else:
-            (rev_dir, _) = Util.get_rev_dir(dir, 'mesa', rev)
-            mesa_dir = '%s/%s' % (dir, rev_dir)
-            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir)
-            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir)
-            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir)
-
-            if type == 'iris':
-                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'iris')
-            else:
-                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
-
-            Util.info('Use mesa at %s' % mesa_dir)
-
-    @staticmethod
     def get_quotation():
         if Util.HOST_OS == Util.WINDOWS:
             quotation = '\"'
@@ -482,7 +419,7 @@ class Util:
         return urllib2.urlopen(url)
 
     @staticmethod
-    def get_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False, dcheck=False):
+    def cal_relative_out_dir(target_arch, target_os, symbol_level=0, no_component_build=False, dcheck=False):
         relative_out_dir = 'out-%s-%s' % (target_arch, target_os)
         relative_out_dir += '-symbol%s' % symbol_level
 
@@ -584,7 +521,7 @@ class Util:
 
         # browser_path
         if not browser_path:
-            out_dir = Util.get_relative_out_dir('x86_64', Util.HOST_OS)
+            out_dir = Util.cal_relative_out_dir('x86_64', Util.HOST_OS)
             if target_os == Util.CHROMEOS:
                 browser_path = '/opt/google/chrome/chrome'
             elif target_os == Util.DARWIN:
@@ -670,52 +607,6 @@ class Util:
             Util.error('Could not get webdriver')
 
         return driver
-
-    @staticmethod
-    def backup_gn_target(repo_dir, out_dir, backup_dir, targets, target_dict={}, need_symbol=False, target_os=''):
-        if os.path.exists(backup_dir):
-            Util.info('Backup folder "%s" alreadys exists' % backup_dir)
-            return
-            #os.rename(backup_dir, '%s-%s' % (backup_dir, Util.get_datetime()))
-
-        Util.chdir(repo_dir)
-        for key, value in target_dict.items():
-            if key in targets:
-                targets[targets.index(key)] = value
-
-        tmp_files = []
-        for target in targets:
-            target_files = Util.execute('gn desc %s %s runtime_deps' % (out_dir, target), return_out=True)[1].rstrip('\n').split('\n')
-            tmp_files = Util.union_list(tmp_files, target_files)
-
-        exclude_files = ['gen/', '../../.vpython']
-        src_files = []
-        for tmp_file in tmp_files:
-            if not need_symbol and tmp_file.endswith('.pdb'):
-                continue
-
-            if tmp_file.startswith('./'):
-                tmp_file = tmp_file[2:]
-
-            if target_os == Util.CHROMEOS and not tmp_file.startswith('../../'):
-                continue
-
-            for exclude_file in exclude_files:
-                if tmp_file.startswith(exclude_file):
-                    break
-            else:
-                src_files.append(tmp_file)
-
-        for src_file in src_files:
-            src_file = '%s/%s' % (out_dir, src_file)
-            dst_dir = '%s/%s' % (backup_dir, src_file)
-            Util.ensure_dir(os.path.dirname(dst_dir))
-            if os.path.isdir(src_file):
-                dst_dir = os.path.dirname(os.path.dirname(dst_dir))
-            Util.execute('cp -rf %s %s' % (src_file, dst_dir), show_cmd=True)
-
-            # permission denied
-            #shutil.copyfile(file, dst_dir)
 
     @staticmethod
     def get_md5(path, verbose=False):
@@ -890,6 +781,129 @@ class Util:
 
         return has_update
 
+    @staticmethod
+    # committer date, instead of author date
+    def get_repo_head_date():
+        return Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', return_out=True, show_cmd=False)[1].rstrip('\n').rstrip('\r')
+
+    @staticmethod
+    def get_repo_head_hash():
+        cmd = 'git log --pretty=format:"%H" -1'
+        result = Util.execute(cmd, return_out=True, show_cmd=False)
+        return result[1].rstrip('\n').rstrip('\r')
+
+    @staticmethod
+    def get_repo_rev():
+        cmd = 'git rev-list --count HEAD'
+        result = Util.execute(cmd, return_out=True, show_cmd=False)
+        return result[1].rstrip('\n').rstrip('\r')
+
+    @staticmethod
+    def get_repo_hashes():
+        cmd = 'git log --pretty=format:"%H" --reverse'
+        result = Util.execute(cmd, return_out=True, show_cmd=False)
+        return result[1].split('\n')
+
+    @staticmethod
+    def cal_backup_dir(rev=0):
+        if not rev:
+            rev = Util.get_repo_rev()
+        return '%s-%s-%s' % (Util.get_repo_head_date(), rev, Util.get_repo_head_hash())
+
+    @staticmethod
+    def set_mesa(dir, rev, type='iris'):
+        if rev == 'system':
+            Util.ensure_pkg('mesa-vulkan-drivers')
+            Util.info('Use system Mesa')
+        else:
+            (rev_dir, _) = Util.get_backup_dir(dir, 'mesa', rev)
+            mesa_dir = '%s/%s' % (dir, rev_dir)
+            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir)
+            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir)
+            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir)
+
+            if type == 'iris':
+                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'iris')
+            else:
+                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
+
+            Util.info('Use mesa at %s' % mesa_dir)
+
+    @staticmethod
+    def backup_gn_target(repo_dir, out_dir, target_str, target_dict={}, need_symbol=False, target_os=''):
+        backup_dir = Util.cal_backup_dir()
+        Util.info('Begin to backup %s' % backup_dir)
+        backup_path = '%s/backup/%s' % (repo_dir, backup_dir)
+
+        if os.path.exists(backup_path):
+            Util.info('Backup folder "%s" alreadys exists' % backup_path)
+            os.rename(backup_path, '%s-%s' % (backup_path, Util.get_datetime()))
+
+        targets = target_str.split(',')
+        Util.chdir(repo_dir)
+        for key, value in target_dict.items():
+            if key in targets:
+                targets[targets.index(key)] = value
+
+        tmp_files = []
+        for target in targets:
+            target_files = Util.execute('gn desc %s %s runtime_deps' % (out_dir, target), return_out=True)[1].rstrip('\n').split('\n')
+            tmp_files = Util.union_list(tmp_files, target_files)
+
+        exclude_files = ['gen/', '../../.vpython']
+        src_files = []
+        for tmp_file in tmp_files:
+            if not need_symbol and tmp_file.endswith('.pdb'):
+                continue
+
+            if tmp_file.startswith('./'):
+                tmp_file = tmp_file[2:]
+
+            if target_os == Util.CHROMEOS and not tmp_file.startswith('../../'):
+                continue
+
+            for exclude_file in exclude_files:
+                if tmp_file.startswith(exclude_file):
+                    break
+            else:
+                src_files.append(tmp_file)
+
+        for src_file in src_files:
+            src_file = '%s/%s' % (out_dir, src_file)
+            dst_dir = '%s/%s' % (backup_path, src_file)
+            Util.ensure_dir(os.path.dirname(dst_dir))
+            if os.path.isdir(src_file):
+                dst_dir = os.path.dirname(os.path.dirname(dst_dir))
+            Util.execute('cp -rf %s %s' % (src_file, dst_dir), show_cmd=True)
+
+            # permission denied
+            #shutil.copyfile(file, dst_dir)
+
+    @staticmethod
+    def get_backup_dir(backup_dir, rev):
+        if rev == 'latest':
+            rev = -1
+            rev_dir = ''
+            files = os.listdir(backup_dir)
+            for file in files:
+                match = re.match(Util.BACKUP_PATTERN, file)
+                if match:
+                    tmp_rev = int(match.group(1))
+                    if tmp_rev > rev:
+                        rev_dir = file
+                        rev = tmp_rev
+
+            return (rev_dir, rev)
+        else:
+            files = os.listdir(backup_dir)
+            for file in files:
+                match = re.search(Util.BACKUP_PATTERN, file)
+                if match:
+                    rev_dir = file
+                    return (rev_dir, rev)
+            else:
+                Util.error('Could not find mesa build %s' % rev)
+
     MYSQL_SERVER = 'wp-27'
     WINDOWS = 'windows'
     LINUX = 'linux'
@@ -897,7 +911,7 @@ class Util:
     CHROMEOS = 'chromeos'
     ANDROID = 'android'
     MAX_REV = 9999999
-    CHROME_BUILD_PATTERN = r'(\d{6})'
+    BACKUP_PATTERN = r'\d{8}-(\d*)-[a-z0-9]{40}$' # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
     HOST_OS = platform.system().lower()
     HOST_OS_ID = ''
