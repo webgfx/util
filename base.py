@@ -270,11 +270,14 @@ class Util:
         return os.getenv(env)
 
     @staticmethod
-    def set_env(env, value):
+    def set_env(env, value, verbose=False):
         if value:
             os.environ[env] = value
         else:
             del os.environ[env]
+
+        if verbose:
+            Util.info('%s=%s' % (env, value))
 
     # get seconds since 1970-01-01
     @staticmethod
@@ -816,11 +819,11 @@ class Util:
             Util.ensure_pkg('mesa-vulkan-drivers')
             Util.info('Use system Mesa')
         else:
-            (rev_dir, _) = Util.get_backup_dir(dir, 'mesa', rev)
+            (rev_dir, _) = Util.get_backup_dir(dir, rev)
             mesa_dir = '%s/%s' % (dir, rev_dir)
-            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir)
-            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir)
-            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir)
+            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir, verbose=True)
+            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
+            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir, verbose=True)
 
             if type == 'iris':
                 Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'iris')
@@ -830,8 +833,7 @@ class Util:
             Util.info('Use mesa at %s' % mesa_dir)
 
     @staticmethod
-    def backup_gn_target(repo_dir, out_dir, target_str, target_dict={}, need_symbol=False, target_os=''):
-        backup_dir = Util.cal_backup_dir()
+    def backup_gn_target(repo_dir, out_dir, backup_dir, target_str, target_dict={}, need_symbol=False, target_os=''):
         Util.info('Begin to backup %s' % backup_dir)
         backup_path = '%s/backup/%s' % (repo_dir, backup_dir)
 
