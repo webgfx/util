@@ -273,7 +273,7 @@ class Util:
     def set_env(env, value, verbose=False):
         if value:
             os.environ[env] = value
-        else:
+        elif env in os.environ:
             del os.environ[env]
 
         if verbose:
