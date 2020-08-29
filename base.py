@@ -1087,7 +1087,7 @@ class Program():
         if extra_cmd:
             cmd += ' ' + extra_cmd
         if cmd_type == 'sync':
-            cmd += ' -n -D -R --delete_unversioned_trees'
+            cmd += ' -n -D -R'
 
         if not job_count:
             job_count = Util.CPU_COUNT
