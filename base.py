@@ -819,7 +819,7 @@ class Util:
             Util.ensure_pkg('mesa-vulkan-drivers')
             Util.info('Use system Mesa')
         else:
-            (rev_dir, _) = Util.get_backup_dir(dir, rev)
+            (rev_dir, rev) = Util.get_backup_dir(dir, rev)
             mesa_dir = '%s/%s' % (dir, rev_dir)
             Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir, verbose=True)
             Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
@@ -831,6 +831,7 @@ class Util:
                 Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
 
             Util.info('Use mesa at %s' % mesa_dir)
+        return rev
 
     @staticmethod
     def backup_gn_target(repo_dir, out_dir, backup_dir, target_str, target_dict={}, need_symbol=False, target_os=''):
