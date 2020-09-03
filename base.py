@@ -253,12 +253,11 @@ class Util:
         return lines
 
     @staticmethod
-    def write_file(file_path, lines):
+    def write_file(file_path, lines, mode='w'):
         Util.ensure_file(file_path)
-        f = open(file_path, 'w')
+        f = open(file_path, mode)
         for line in lines:
             f.write(line + '\n')
-            print(line)
         f.close()
 
     @staticmethod
