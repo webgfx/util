@@ -944,6 +944,7 @@ class Util:
     BACKUP_DIR = '%s/backup' % WORKSPACE_DIR
     PROJECT_DIR = '%s/project' % WORKSPACE_DIR
     PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
+    PROJECT_AQUARIUM_DIR = '%s/aquarium' % PROJECT_DIR
     PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
     PROJECT_CHROME_SRC_DIR = '%s/src' % PROJECT_CHROME_DIR
     PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
