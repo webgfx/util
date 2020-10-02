@@ -181,6 +181,10 @@ class Util:
         os.chdir(dir_path)
 
     @staticmethod
+    def print_cwd():
+        Util.info(os.getcwd())
+
+    @staticmethod
     def get_dir(path):
         return os.path.split(os.path.realpath(path))[0]
 
@@ -258,6 +262,21 @@ class Util:
         f = open(file_path, mode)
         for line in lines:
             f.write(line + '\n')
+        f.close()
+
+    @staticmethod
+    def load_json(file_path):
+        file = open(file_path)
+        content = json.load(file)
+        file.close()
+        return content
+
+    @staticmethod
+    def dump_json(file_path, content):
+        f = file(file_path, 'r+')
+        f.seek(0)
+        f.truncate()
+        json.dump(content, f, indent=4)
         f.close()
 
     @staticmethod
@@ -807,81 +826,6 @@ class Util:
         return result[1].split('\n')
 
     @staticmethod
-    def cal_backup_dir(rev=0):
-        if not rev:
-            rev = Util.get_repo_rev()
-        return '%s-%s-%s' % (Util.get_repo_head_date(), rev, Util.get_repo_head_hash())
-
-    @staticmethod
-    def set_mesa(dir, rev, type='iris'):
-        if rev == 'system':
-            Util.ensure_pkg('mesa-vulkan-drivers')
-            Util.info('Use system Mesa')
-        else:
-            (rev_dir, rev) = Util.get_backup_dir(dir, rev)
-            mesa_dir = '%s/%s' % (dir, rev_dir)
-            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir, verbose=True)
-            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
-            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir, verbose=True)
-
-            if type == 'iris':
-                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'iris')
-            else:
-                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
-
-            Util.info('Use mesa at %s' % mesa_dir)
-        return rev
-
-    @staticmethod
-    def backup_gn_target(repo_dir, out_dir, backup_dir, target_str, target_dict={}, need_symbol=False, target_os=''):
-        Util.info('Begin to backup %s' % backup_dir)
-        backup_path = '%s/backup/%s' % (repo_dir, backup_dir)
-
-        if os.path.exists(backup_path):
-            Util.info('Backup folder "%s" alreadys exists' % backup_path)
-            os.rename(backup_path, '%s-%s' % (backup_path, Util.get_datetime()))
-
-        targets = target_str.split(',')
-        Util.chdir(repo_dir)
-        for key, value in target_dict.items():
-            if key in targets:
-                targets[targets.index(key)] = value
-
-        tmp_files = []
-        for target in targets:
-            target_files = Util.execute('gn desc %s %s runtime_deps' % (out_dir, target), return_out=True)[1].rstrip('\n').split('\n')
-            tmp_files = Util.union_list(tmp_files, target_files)
-
-        exclude_files = ['gen/', '../../.vpython']
-        src_files = []
-        for tmp_file in tmp_files:
-            if not need_symbol and tmp_file.endswith('.pdb'):
-                continue
-
-            if tmp_file.startswith('./'):
-                tmp_file = tmp_file[2:]
-
-            if target_os == Util.CHROMEOS and not tmp_file.startswith('../../'):
-                continue
-
-            for exclude_file in exclude_files:
-                if tmp_file.startswith(exclude_file):
-                    break
-            else:
-                src_files.append(tmp_file)
-
-        for src_file in src_files:
-            src_file = '%s/%s' % (out_dir, src_file)
-            dst_dir = '%s/%s' % (backup_path, src_file)
-            Util.ensure_dir(os.path.dirname(dst_dir))
-            if os.path.isdir(src_file):
-                dst_dir = os.path.dirname(os.path.dirname(dst_dir))
-            Util.execute('cp -rf %s %s' % (src_file, dst_dir), show_cmd=True)
-
-            # permission denied
-            #shutil.copyfile(file, dst_dir)
-
-    @staticmethod
     def get_backup_dir(backup_dir, rev):
         if rev == 'latest':
             rev = -1
@@ -905,6 +849,32 @@ class Util:
                     return (rev_dir, rev)
             else:
                 Util.error('Could not find mesa build %s' % rev)
+
+    @staticmethod
+    def set_mesa(dir, rev=0, type='iris'):
+        if rev == 'system':
+            Util.ensure_pkg('mesa-vulkan-drivers')
+            Util.info('Use system Mesa')
+        else:
+            (rev_dir, rev) = Util.get_backup_dir(dir, rev)
+            mesa_dir = '%s/%s' % (dir, rev_dir)
+            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir, verbose=True)
+            Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
+            Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir, verbose=True)
+
+            if type == 'iris':
+                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'iris')
+            else:
+                Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
+
+            Util.info('Use mesa at %s' % mesa_dir)
+        return rev
+
+    @staticmethod
+    def cal_backup_dir(rev=0):
+        if not rev:
+            rev = Util.get_repo_rev()
+        return '%s-%s-%s' % (Util.get_repo_head_date(), rev, Util.get_repo_head_hash())
 
     MYSQL_SERVER = 'wp-27'
     WINDOWS = 'windows'
@@ -954,6 +924,7 @@ class Util:
     PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
     PROJECT_TFJS_DIR = '%s/tfjs' % PROJECT_DIR
     PROJECT_TOOLKIT_DIR = '%s/toolkit' % PROJECT_DIR
+    GNP_SCRIPT_PATH = '%s/misc/gnp.py' %PROJECT_TOOLKIT_DIR
     PROJECT_V8_DIR = '%s/v8' % PROJECT_DIR
     PROJECT_WASM_DIR = '%s/wasm' % PROJECT_DIR
     PROJECT_WEBGL_DIR = '%s/WebGL' % PROJECT_DIR
@@ -1007,12 +978,12 @@ class ScriptRepo:
         Util.prepend_path(TOOL_DIR)
 
     IGNORE_DIR = '%s/ignore' % ROOT_DIR
+    IGNORE_BOTO_FILE = '%s/boto.conf' % IGNORE_DIR
     IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
     IGNORE_TIMESTAMP_DIR = '%s/timestamp' % IGNORE_DIR
     IGNORE_CHROMIUM_DIR = '%s/chromium' % IGNORE_DIR
     IGNORE_CHROMIUM_SELFBUILT_DIR = '%s/selfbuilt' % IGNORE_CHROMIUM_DIR
     IGNORE_CHROMIUM_DOWNLOAD_DIR = '%s/download' % IGNORE_CHROMIUM_DIR
-    IGNORE_CHROMIUM_BOTO_FILE = '%s/boto.conf' % IGNORE_CHROMIUM_DIR
     IGNORE_WEBMARK_DIR = '%s/webmark' % IGNORE_DIR
     IGNORE_WEBMARK_RESULT_DIR = '%s/result' % IGNORE_WEBMARK_DIR
 
@@ -1023,30 +994,25 @@ class ScriptRepo:
 
 class Program():
     def __init__(self, parser):
-        parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
-        parser.add_argument('--timestamp', dest='timestamp', help='timestamp')
+        parser.add_argument('--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second')
         parser.add_argument('--log-file', dest='log_file', help='log file')
-        parser.add_argument('--fixed-timestamp', dest='fixed_timestamp', help='fixed timestamp for test sake. We may run multiple tests and results are in same dir', action='store_true')
         parser.add_argument('--proxy', dest='proxy', help='proxy')
+        parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
         parser.add_argument('--target-arch', dest='target_arch', help='target arch', choices=['x86', 'arm', 'x86_64', 'arm64'], default='default')
         parser.add_argument('--target-os', dest='target_os', help='target os, choices can be android, linux, chromeos, windows, darwin', default='default')
 
-
+        parser.epilog = '''
+examples:
+python %(prog)s --root-dir --target-arch''' + parser.epilog
+        parser.formatter_class = argparse.RawTextHelpFormatter
         args = parser.parse_args()
+        self.args = args
 
-        if args.root_dir:
-            root_dir = args.root_dir
-        elif os.path.islink(sys.argv[0]):
-            root_dir = Util.get_symbolic_link_dir()
-        else:
-            root_dir = os.path.abspath(os.getcwd())
-
-        if args.timestamp:
-            timestamp = args.timestamp
-        elif args.fixed_timestamp:
-            timestamp = Util.get_datetime(format='%Y%m%d')
-        else:
+        if args.timestamp == 'second':
             timestamp = Util.get_datetime()
+        elif args.timestamp == 'day':
+            timestamp = Util.get_datetime(format='%Y%m%d')
+        self.timestamp = timestamp
 
         if args.log_file:
             log_file = args.log_file
@@ -1054,6 +1020,7 @@ class Program():
             script_name = os.path.basename(sys.argv[0]).replace('.py', '')
             log_file = ScriptRepo.IGNORE_LOG_DIR + '/' + script_name + '-' + timestamp + '.log'
         Util.info('Log file: %s' % log_file)
+        self.log_file = log_file
 
         if args.proxy:
             proxy_parts = args.proxy.split(':')
@@ -1062,61 +1029,46 @@ class Program():
         else:
             proxy_address = ''
             proxy_port = ''
+        self.proxy_address = proxy_address
+        self.proxy_port = proxy_port
 
-        Util.ensure_dir(root_dir)
+        if args.root_dir:
+            if not os.path.exists(args.root_dir):
+                Util.error('root_dir %s does not exist' % args.root_dir)
+            root_dir = args.root_dir
+        elif os.path.islink(sys.argv[0]):
+            root_dir = Util.get_symbolic_link_dir()
+        else:
+            root_dir = os.path.abspath(os.getcwd())
         Util.chdir(root_dir)
+        self.root_dir = root_dir
+
+        target_arch = args.target_arch
+        if target_arch == 'default':
+            target_arch = 'x86_64'
+        self.target_arch = target_arch
+
+        target_os = args.target_os
+        if target_os == 'default':
+            target_os = Util.HOST_OS
+        self.target_os = target_os
+
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
 
-        self.args = args
-        self.root_dir = root_dir
-        self.timestamp = timestamp
-        self.log_file = log_file
-        self.proxy_address = proxy_address
-        self.proxy_port = proxy_port
-        if args.target_arch == 'default':
-            self.target_arch = 'x86_64'
-        if args.target_os == 'default':
-            self.target_os = Util.HOST_OS
-
-    def execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
+    def _execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, return_out=return_out, show_duration=show_duration, dryrun=dryrun, log_file=self.log_file)
-
-    def execute_gclient(self, cmd_type, job_count=0, extra_cmd='', verbose=False):
-        self._set_boto()
-        cmd = 'gclient ' + cmd_type
-        if extra_cmd:
-            cmd += ' ' + extra_cmd
-        if cmd_type == 'sync':
-            cmd += ' -n -D -R'
-
-        if not job_count:
-            job_count = Util.CPU_COUNT
-        cmd += ' -j%s' % job_count
-
-        if verbose:
-            cmd += ' -v'
-
-        if not Util.has_depot_tools_in_path() and os.path.exists(Util.PROJECT_DEPOT_TOOLS):
-            Util.prepend_path(Util.PROJECT_DEPOT_TOOLS)
-
-        result = Util.execute(cmd=cmd)
-
-        if not Util.has_depot_tools_in_path() and os.path.exists(Util.PROJECT_DEPOT_TOOLS):
-            Util.remove_path(Util.PROJECT_DEPOT_TOOLS)
-
-        return result
 
     def _set_boto(self):
         if not self.args.proxy:
             return
 
-        boto_file = ScriptRepo.IGNORE_CHROMIUM_BOTO_FILE
+        boto_file = ScriptRepo.IGNORE_BOTO_FILE
         if not os.path.exists(boto_file):
             lines = [
                 '[Boto]',
-                'proxy = %s' % self.program.proxy_address,
-                'proxy_port = %s' % self.program.proxy_port,
+                'proxy = %s' % self.proxy_address,
+                'proxy_port = %s' % self.proxy_port,
                 'proxy_rdns = True',
             ]
             Util.write_file(boto_file, lines)
