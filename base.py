@@ -115,7 +115,8 @@ class Util:
             timer = Timer()
 
         if dryrun:
-            result = [0, '']
+            ret = 0
+            result = [ret, '']
         elif return_out:
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (out, err) = process.communicate()
@@ -266,14 +267,14 @@ class Util:
 
     @staticmethod
     def load_json(file_path):
-        file = open(file_path)
-        content = json.load(file)
-        file.close()
+        f = open(file_path)
+        content = json.load(f)
+        f.close()
         return content
 
     @staticmethod
     def dump_json(file_path, content):
-        f = file(file_path, 'r+')
+        f = open(file_path, 'r+')
         f.seek(0)
         f.truncate()
         json.dump(content, f, indent=4)
