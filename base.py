@@ -877,6 +877,10 @@ class Util:
             rev = Util.get_repo_rev()
         return '%s-%s-%s' % (Util.get_repo_head_date(), rev, Util.get_repo_head_hash())
 
+    @staticmethod
+    def get_python_ver():
+        return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
+
     MYSQL_SERVER = 'wp-27'
     WINDOWS = 'windows'
     LINUX = 'linux'
@@ -993,7 +997,7 @@ class ScriptRepo:
     CONTRIB_DIR = '%s/contrib' % ROOT_DIR
     CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX)
 
-class Program():
+class Program(object):
     def __init__(self, parser):
         parser.add_argument('--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second')
         parser.add_argument('--log-file', dest='log_file', help='log file')
