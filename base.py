@@ -859,7 +859,7 @@ class Util:
         else:
             (rev_dir, rev) = Util.get_backup_dir(dir, rev)
             mesa_dir = '%s/%s' % (dir, rev_dir)
-            Util.set_env('LD_LIBRARY_PATH', '%s/lib' % mesa_dir, verbose=True)
+            Util.set_env('LD_LIBRARY_PATH', '%s/lib:/%s/lib/x86_64-linux-gnu' % (mesa_dir, mesa_dir), verbose=True)
             Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
             Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir, verbose=True)
 
