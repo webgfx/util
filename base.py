@@ -215,7 +215,7 @@ class Util:
     @staticmethod
     def pkg_installed(pkg):
         cmd = 'dpkg -s ' + pkg
-        result = Util.execute(cmd, return_out=True, show_cmd=False)
+        result = Util.execute(cmd, return_out=True, show_cmd=False, exit_on_error=False)
         if result[0]:
             return False
         else:
@@ -361,6 +361,37 @@ class Util:
     @staticmethod
     def get_caller_name():
         return inspect.stack()[1][3]
+
+    @staticmethod
+    # ver is in format a.b.c.d
+    # return 1 if ver_a > ver_b
+    # return 0 if ver_a == ver_b
+    # return -1 if ver_a < ver_b
+    def cmp_ver(ver_a, ver_b):
+        vers_a = [int(x) for x in ver_a.split('.')]
+        vers_b = [int(x) for x in ver_b.split('.')]
+
+        # make sure two lists have same length and add 0s for short one.
+        len_a = len(vers_a)
+        len_b = len(vers_b)
+        len_max = max(len_a, len_b)
+        len_diff = abs(len_a - len_b)
+        vers_diff = []
+        for _ in range(len_diff):
+            vers_diff.append(0)
+        if len_a < len_b:
+            vers_a.extend(vers_diff)
+        elif len_b < len_a:
+            vers_b.extend(vers_diff)
+
+        index = 0
+        while index < len_max:
+            if vers_a[index] > vers_b[index]:
+                return 1
+            elif vers_a[index] < vers_b[index]:
+                return -1
+            index += 1
+        return 0
 
     @staticmethod
     def strace_function(frame, event, arg, indent=[0]):
