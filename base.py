@@ -912,6 +912,51 @@ class Util:
     def get_python_ver():
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
+    @staticmethod
+    def get_gpu_integration_result(result_file):
+        def _parse_result(key, val, path, fail_fail, fail_pass, pass_fail, pass_pass):
+            if 'expected' in val:
+                if val['expected'] == 'FAIL' and val['actual'].startswith('FAIL'):
+                    fail_fail.append(path)
+                elif val['expected'] == 'FAIL' and val['actual'] == 'PASS':
+                    fail_pass.append(path)
+                elif val['expected'] == 'PASS' and val['actual'].startswith('FAIL'):
+                    pass_fail.append(path)
+                elif val['expected'] == 'PASS' and val['actual'] == 'PASS':
+                    pass_pass.append(path)
+            else:
+                for new_key, new_val in val.items():
+                    _parse_result(new_key, new_val, '%s/%s' % (path, new_key), fail_fail, fail_pass, pass_fail, pass_pass)
+
+        json_result = json.load(open(result_file))
+        result_type = json_result['num_failures_by_type']
+        test_results = json_result['tests']
+
+        fail_fail = []
+        fail_pass = []
+        pass_fail = []
+        pass_pass = []
+        for key, val in test_results.items():
+            _parse_result(key, val, key, fail_fail, fail_pass, pass_fail, pass_pass)
+
+        result = 'FAIL: %s (New: %s, Expected: %s), PASS: %s (New: %s, Expected: %s), SKIP: %s\n' % (result_type['FAIL'], len(pass_fail), len(fail_fail), result_type['PASS'], len(fail_pass), len(pass_pass), result_type['SKIP'])
+        result += '[PASS_FAIL(%s)]\n' % len(pass_fail)
+        if pass_fail:
+            for c in pass_fail:
+                result += c + '\n'
+
+        result += '[FAIL_PASS(%s)]\n' % len(fail_pass)
+        if fail_pass:
+            for c in fail_pass:
+                result += c + '\n'
+
+        result += '[FAIL_FAIL(%s)]\n' % len(fail_fail)
+        if fail_fail:
+            for c in fail_fail:
+                result += c + '\n'
+
+        return  json_result['num_regressions'], result
+
     MYSQL_SERVER = 'wp-27'
     WINDOWS = 'windows'
     LINUX = 'linux'
