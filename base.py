@@ -273,11 +273,11 @@ class Util:
         return content
 
     @staticmethod
-    def dump_json(file_path, content):
+    def dump_json(file_path, content, indent=2, sort_keys=False):
         f = open(file_path, 'r+')
         f.seek(0)
         f.truncate()
-        json.dump(content, f, indent=4)
+        json.dump(content, f, indent=indent, sort_keys=sort_keys)
         f.close()
 
     @staticmethod
@@ -433,6 +433,9 @@ class Util:
         if isinstance(to, list):
             to = ','.join(to)
 
+        if isinstance(content, list):
+            content = '\n'.join(content)
+
         to_list = to.split(',')
         msg = MIMEMultipart('alternative')
         msg['From'] = sender
@@ -441,7 +444,7 @@ class Util:
         msg.attach(MIMEText(content, type))
 
         try:
-            smtp = smtplib.SMTP('localhost')
+            smtp = smtplib.SMTP(Util.SMTP_SERVER)
             smtp.sendmail(sender, to_list, msg.as_string())
             Util.info('Email was sent successfully')
         except Exception as e:
@@ -928,7 +931,13 @@ class Util:
                 for new_key, new_val in val.items():
                     _parse_result(new_key, new_val, '%s/%s' % (path, new_key), fail_fail, fail_pass, pass_fail, pass_pass)
 
-        json_result = json.load(open(result_file))
+        try:
+            json_result = json.load(open(result_file))
+        except Exception:
+            num_regressions = 1
+            result = 'FAIL: All'
+            return num_regressions, result
+
         result_type = json_result['num_failures_by_type']
         test_results = json_result['tests']
 
@@ -958,6 +967,7 @@ class Util:
         return  json_result['num_regressions'], result
 
     MYSQL_SERVER = 'wp-27'
+    SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'windows'
     LINUX = 'linux'
     DARWIN = 'darwin'
