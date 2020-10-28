@@ -106,8 +106,14 @@ class Util:
             cmd = '%s 2>&1' % cmd
         else:
             cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
+
         if log_file:
-            cmd += ' | tee -a %s' % log_file
+            if Util.HOST_OS == Util.WINDOWS:
+                log_file = Util.use_backslash(log_file)
+                cmd += ' | mtee /E /+'
+            else:
+                cmd += ' | tee -a'
+            cmd += ' %s' % log_file
         if not Util.HOST_OS == Util.WINDOWS:
             cmd += '; (exit ${PIPESTATUS})"'
 
@@ -124,7 +130,7 @@ class Util:
             result = [ret, (out + err).decode('utf-8')]
         else:
             ret = os.system(cmd)
-            result = [int(ret / 256), '']
+            result = [ret, '']
 
         if show_duration:
             Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
@@ -258,10 +264,13 @@ class Util:
         return lines
 
     @staticmethod
-    def write_file(file_path, lines, mode='w'):
+    def append_file(file_path, content):
         Util.ensure_file(file_path)
-        f = open(file_path, mode)
-        for line in lines:
+        if type(content) in [str, unicode]:
+            content = [content]
+
+        f = open(file_path, 'a+')
+        for line in content:
             f.write(line + '\n')
         f.close()
 
@@ -931,20 +940,21 @@ class Util:
                 for new_key, new_val in val.items():
                     _parse_result(new_key, new_val, '%s/%s' % (path, new_key), fail_fail, fail_pass, pass_fail, pass_pass)
 
+        fail_fail = []
+        fail_pass = []
+        pass_fail = []
+        pass_pass = []
+
         try:
             json_result = json.load(open(result_file))
         except Exception:
             num_regressions = 1
-            result = 'FAIL: All'
+            result = '[PASS_FAIL(All)]\nAll in %s' % result_file
             return num_regressions, result
 
         result_type = json_result['num_failures_by_type']
         test_results = json_result['tests']
 
-        fail_fail = []
-        fail_pass = []
-        pass_fail = []
-        pass_pass = []
         for key, val in test_results.items():
             _parse_result(key, val, key, fail_fail, fail_pass, pass_fail, pass_pass)
 
@@ -1162,6 +1172,6 @@ python %(prog)s --root-dir --target-arch''' + parser.epilog
                 'proxy_port = %s' % self.proxy_port,
                 'proxy_rdns = True',
             ]
-            Util.write_file(boto_file, lines)
+            Util.append_file(boto_file, lines)
 
         Util.set_env('NO_AUTH_BOTO_CONFIG', boto_file)
