@@ -103,18 +103,14 @@ class Util:
             Util.cmd(orig_cmd)
 
         if Util.HOST_OS == Util.WINDOWS:
-            cmd = '%s 2>&1' % cmd
+            if log_file:
+                fail_file = ScriptRepo.IGNORE_FAIL_FILE
+                Util.ensure_file(fail_file)
+                cmd = '(%s && rm -f %s) 2>&1 | tee -a %s' % (cmd, fail_file, log_file)
         else:
-            cmd = 'bash -o pipefail -c "%s 2>&1' % cmd
-
-        if log_file:
-            if Util.HOST_OS == Util.WINDOWS:
-                log_file = Util.use_backslash(log_file)
-                cmd += ' | mtee /E /+'
-            else:
-                cmd += ' | tee -a'
-            cmd += ' %s' % log_file
-        if not Util.HOST_OS == Util.WINDOWS:
+            cmd = 'bash -o pipefail -c "%s' % cmd
+            if log_file:
+                cmd += ' 2>&1 | tee -a %s' % log_file
             cmd += '; (exit ${PIPESTATUS})"'
 
         if show_duration:
@@ -122,24 +118,34 @@ class Util:
 
         if dryrun:
             ret = 0
-            result = [ret, '']
-        elif return_out:
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = process.communicate()
-            ret = process.returncode
-            result = [ret, (out + err).decode('utf-8')]
+            out = ''
         else:
-            ret = os.system(cmd)
-            result = [ret, '']
+            if return_out:
+                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = process.communicate()
+                ret = process.returncode
+                out = (out + err).decode('utf-8')
+            else:
+                ret = os.system(cmd)
+                out = ''
+
+            if log_file and Util.HOST_OS == Util.WINDOWS:
+                if os.path.exists(fail_file):
+                    #Util.ensure_nofile(fail_file)
+                    ret = 1
+                else:
+                    ret = 0
+
+        result = [ret, out]
 
         if show_duration:
             Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
 
         if ret:
             if exit_on_error:
-                Util.error('Failed to execute command "%s"' % orig_cmd)
+                Util.error('Failed to execute command "%s"' % cmd)
             else:
-                Util.warning('Failed to execute command "%s"' % orig_cmd)
+                Util.warning('Failed to execute command "%s"' % cmd)
 
         return result
 
@@ -266,7 +272,14 @@ class Util:
     @staticmethod
     def append_file(file_path, content):
         Util.ensure_file(file_path)
-        if type(content) in [str, unicode]:
+
+        python_ver = Util.get_python_ver()
+        if python_ver[0] == 3:
+            types = [str]
+        else:
+            types = [str, unicode]
+
+        if type(content) in types:
             content = [content]
 
         f = open(file_path, 'a+')
@@ -443,7 +456,7 @@ class Util:
             to = ','.join(to)
 
         if isinstance(content, list):
-            content = '\n'.join(content)
+            content = '\n\n'.join(content)
 
         to_list = to.split(',')
         msg = MIMEMultipart('alternative')
@@ -925,7 +938,7 @@ class Util:
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
     @staticmethod
-    def get_gpu_integration_result(result_file):
+    def get_test_result(result_file):
         def _parse_result(key, val, path, fail_fail, fail_pass, pass_fail, pass_pass):
             if 'expected' in val:
                 if val['expected'] == 'FAIL' and val['actual'].startswith('FAIL'):
@@ -944,37 +957,23 @@ class Util:
         fail_pass = []
         pass_fail = []
         pass_pass = []
+        results = []
 
         try:
             json_result = json.load(open(result_file))
+            for key, val in json_result['tests'].items():
+                _parse_result(key, val, key, fail_fail, fail_pass, pass_fail, pass_pass)
         except Exception:
-            num_regressions = 1
-            result = '[PASS_FAIL(All)]\nAll in %s' % result_file
-            return num_regressions, result
+            pass_fail.append('All in %s' % result_file)
 
-        result_type = json_result['num_failures_by_type']
-        test_results = json_result['tests']
+        for result_str in ['pass_fail', 'fail_pass', 'fail_fail', 'pass_pass']:
+            result = eval(result_str)
+            results.append('[%s(%s)]' % (result_str.upper(), len(result)))
+            if result and result_str != 'pass_pass':
+                for item in result:
+                    results.append(item)
 
-        for key, val in test_results.items():
-            _parse_result(key, val, key, fail_fail, fail_pass, pass_fail, pass_pass)
-
-        result = 'FAIL: %s (New: %s, Expected: %s), PASS: %s (New: %s, Expected: %s), SKIP: %s\n' % (result_type['FAIL'], len(pass_fail), len(fail_fail), result_type['PASS'], len(fail_pass), len(pass_pass), result_type['SKIP'])
-        result += '[PASS_FAIL(%s)]\n' % len(pass_fail)
-        if pass_fail:
-            for c in pass_fail:
-                result += c + '\n'
-
-        result += '[FAIL_PASS(%s)]\n' % len(fail_pass)
-        if fail_pass:
-            for c in fail_pass:
-                result += c + '\n'
-
-        result += '[FAIL_FAIL(%s)]\n' % len(fail_fail)
-        if fail_fail:
-            for c in fail_fail:
-                result += c + '\n'
-
-        return  json_result['num_regressions'], result
+        return len(pass_fail), results
 
     MYSQL_SERVER = 'wp-27'
     SMTP_SERVER = 'wp-27.sh.intel.com'
@@ -1080,6 +1079,7 @@ class ScriptRepo:
 
     IGNORE_DIR = '%s/ignore' % ROOT_DIR
     IGNORE_BOTO_FILE = '%s/boto.conf' % IGNORE_DIR
+    IGNORE_FAIL_FILE = '%s/FAIL' % IGNORE_DIR
     IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
     IGNORE_TIMESTAMP_DIR = '%s/timestamp' % IGNORE_DIR
     IGNORE_CHROMIUM_DIR = '%s/chromium' % IGNORE_DIR
