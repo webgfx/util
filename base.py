@@ -296,6 +296,7 @@ class Util:
 
     @staticmethod
     def dump_json(file_path, content, indent=2, sort_keys=False):
+        Util.ensure_file(file_path)
         f = open(file_path, 'r+')
         f.seek(0)
         f.truncate()
