@@ -486,7 +486,7 @@ class Util:
 
     @staticmethod
     def format_slash(s):
-        if Util.HOST_OS == Util.WINDOWS:
+        if platform.system().lower() == 'windows':
             return s.replace('/', '\\')
         else:
             return s.replace('\\', '/')
@@ -975,6 +975,7 @@ class Util:
 
         return len(pass_fail), results
 
+    # constants
     MYSQL_SERVER = 'wp-27'
     SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'windows'
@@ -1011,35 +1012,35 @@ class Util:
         WORKSPACE_DIR = 'd:/workspace'
     else:
         WORKSPACE_DIR = '/workspace'
-    WORKSPACE_DIR = Util.format_slash(WORKSPACE_DIR)
-    BACKUP_DIR =  Util.format_slash('%s/backup' % WORKSPACE_DIR)
-    PROJECT_DIR =  Util.format_slash('%s/project' % WORKSPACE_DIR)
-    PROJECT_ANGLE_DIR =  Util.format_slash('%s/angle' % PROJECT_DIR)
-    PROJECT_AQUARIUM_DIR =  Util.format_slash('%s/aquarium' % PROJECT_DIR)
-    PROJECT_CHROME_DIR =  Util.format_slash('%s/chromium' % PROJECT_DIR)
-    PROJECT_CHROME_SRC_DIR =  Util.format_slash('%s/src' % PROJECT_CHROME_DIR)
-    PROJECT_DAWN_DIR =  Util.format_slash('%s/dawn' % PROJECT_DIR)
-    PROJECT_DEPOT_TOOLS =  Util.format_slash('%s/depot_tools' % PROJECT_DIR)
-    PROJECT_MESA_DIR =  Util.format_slash('%s/mesa' % PROJECT_DIR)
-    PROJECT_MESA_BACKUP_DIR =  Util.format_slash('%s/backup' % PROJECT_MESA_DIR)
-    PROJECT_SKIA_DIR =  Util.format_slash('%s/skia' % PROJECT_DIR)
-    PROJECT_TFJS_DIR =  Util.format_slash('%s/tfjs' % PROJECT_DIR)
-    PROJECT_TOOLKIT_DIR =  Util.format_slash('%s/toolkit' % PROJECT_DIR)
-    GNP_SCRIPT_PATH =  Util.format_slash('%s/misc/gnp.py' %PROJECT_TOOLKIT_DIR)
-    PROJECT_V8_DIR =  Util.format_slash('%s/v8' % PROJECT_DIR)
-    PROJECT_WASM_DIR =  Util.format_slash('%s/wasm' % PROJECT_DIR)
-    PROJECT_WEBGL_DIR =  Util.format_slash('%s/WebGL' % PROJECT_DIR)
-    PROJECT_WEBGPUCTS_DIR =  Util.format_slash('%s/webgpucts' % PROJECT_DIR)
-    PROJECT_WEBGPUSPEC_DIR =  Util.format_slash('%s/webgpuspec' % PROJECT_DIR)
-    PROJECT_WEBBENCH_DIR =  Util.format_slash('%s/webbench' % PROJECT_DIR)
-    PROJECT_WORK_DIR =  Util.format_slash('%s/work' % PROJECT_DIR)
-    PROJECT_WPT_DIR =  Util.format_slash('%s/web-platform-tests' % PROJECT_DIR)
-    HOME_DIR = Util.format_slash(expanduser("~"))
+    WORKSPACE_DIR = format_slash.__func__(WORKSPACE_DIR)
+    BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
+    PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
+    PROJECT_ANGLE_DIR =  format_slash.__func__('%s/angle' % PROJECT_DIR)
+    PROJECT_AQUARIUM_DIR =  format_slash.__func__('%s/aquarium' % PROJECT_DIR)
+    PROJECT_CHROME_DIR =  format_slash.__func__('%s/chromium' % PROJECT_DIR)
+    PROJECT_CHROME_SRC_DIR =  format_slash.__func__('%s/src' % PROJECT_CHROME_DIR)
+    PROJECT_DAWN_DIR =  format_slash.__func__('%s/dawn' % PROJECT_DIR)
+    PROJECT_DEPOT_TOOLS =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
+    PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
+    PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
+    PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
+    PROJECT_TFJS_DIR =  format_slash.__func__('%s/tfjs' % PROJECT_DIR)
+    PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
+    GNP_SCRIPT_PATH =  format_slash.__func__('%s/misc/gnp.py' %PROJECT_TOOLKIT_DIR)
+    PROJECT_V8_DIR =  format_slash.__func__('%s/v8' % PROJECT_DIR)
+    PROJECT_WASM_DIR =  format_slash.__func__('%s/wasm' % PROJECT_DIR)
+    PROJECT_WEBGL_DIR =  format_slash.__func__('%s/WebGL' % PROJECT_DIR)
+    PROJECT_WEBGPUCTS_DIR =  format_slash.__func__('%s/webgpucts' % PROJECT_DIR)
+    PROJECT_WEBGPUSPEC_DIR =  format_slash.__func__('%s/webgpuspec' % PROJECT_DIR)
+    PROJECT_WEBBENCH_DIR =  format_slash.__func__('%s/webbench' % PROJECT_DIR)
+    PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
+    PROJECT_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % PROJECT_DIR)
+    HOME_DIR = format_slash.__func__(expanduser("~"))
 
     if HOST_OS == WINDOWS:
-        APPDATA_DIR = Util.format_slash(os.getenv('APPDATA'))
-        PROGRAMFILES_DIR = Util.format_slash(os.getenv('PROGRAMFILES'))
-        PROGRAMFILESX86_DIR = Util.format_slash(os.getenv('PROGRAMFILES(X86)'))
+        APPDATA_DIR = format_slash.__func__(os.getenv('APPDATA'))
+        PROGRAMFILES_DIR = format_slash.__func__(os.getenv('PROGRAMFILES'))
+        PROGRAMFILESX86_DIR = format_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
 
     if HOST_OS == WINDOWS:
         ENV_SPLITTER = ';'
@@ -1091,7 +1092,7 @@ class ScriptRepo:
     USER_DATA_DIR = Util.format_slash('%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME))
     W3C_DIR = Util.format_slash('%s/w3c' % ROOT_DIR)
     CONTRIB_DIR = Util.format_slash('%s/contrib' % ROOT_DIR)
-    CHROMEDRIVER_PATH = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX)
+    CHROMEDRIVER_PATH = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX))
 
 class Program(object):
     def __init__(self, parser):
