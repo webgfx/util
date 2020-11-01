@@ -104,9 +104,9 @@ class Util:
 
         if Util.HOST_OS == Util.WINDOWS:
             if log_file:
-                fail_file = ScriptRepo.IGNORE_FAIL_FILE
+                fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
                 Util.ensure_file(fail_file)
-                cmd = '(%s && rm -f %s) 2>&1 | tee -a %s' % (cmd, fail_file, log_file)
+                cmd = '(%s && del %s) 2>&1 | tee -a %s' % (cmd, fail_file, log_file)
         else:
             cmd = 'bash -o pipefail -c "%s' % cmd
             if log_file:
@@ -485,12 +485,11 @@ class Util:
         return quotation
 
     @staticmethod
-    def use_slash(s):
-        return s.replace('\\', '/')
-
-    @staticmethod
-    def use_backslash(s):
-        return s.replace('/', '\\')
+    def format_slash(s):
+        if Util.HOST_OS == Util.WINDOWS:
+            return s.replace('/', '\\')
+        else:
+            return s.replace('\\', '/')
 
     @staticmethod
     @retry(Exception, tries=5, delay=3, backoff=2)
@@ -1012,35 +1011,35 @@ class Util:
         WORKSPACE_DIR = 'd:/workspace'
     else:
         WORKSPACE_DIR = '/workspace'
-    BACKUP_DIR = '%s/backup' % WORKSPACE_DIR
-    PROJECT_DIR = '%s/project' % WORKSPACE_DIR
-    PROJECT_ANGLE_DIR = '%s/angle' % PROJECT_DIR
-    PROJECT_AQUARIUM_DIR = '%s/aquarium' % PROJECT_DIR
-    PROJECT_CHROME_DIR = '%s/chromium' % PROJECT_DIR
-    PROJECT_CHROME_SRC_DIR = '%s/src' % PROJECT_CHROME_DIR
-    PROJECT_DAWN_DIR = '%s/dawn' % PROJECT_DIR
-    PROJECT_DEPOT_TOOLS = '%s/depot_tools' % PROJECT_DIR
-    PROJECT_MESA_DIR = '%s/mesa' % PROJECT_DIR
-    PROJECT_MESA_BACKUP_DIR = '%s/backup' % PROJECT_MESA_DIR
-    PROJECT_SKIA_DIR = '%s/skia' % PROJECT_DIR
-    PROJECT_TFJS_DIR = '%s/tfjs' % PROJECT_DIR
-    PROJECT_TOOLKIT_DIR = '%s/toolkit' % PROJECT_DIR
-    GNP_SCRIPT_PATH = '%s/misc/gnp.py' %PROJECT_TOOLKIT_DIR
-    PROJECT_V8_DIR = '%s/v8' % PROJECT_DIR
-    PROJECT_WASM_DIR = '%s/wasm' % PROJECT_DIR
-    PROJECT_WEBGL_DIR = '%s/WebGL' % PROJECT_DIR
-    PROJECT_WEBGPUCTS_DIR = '%s/webgpucts' % PROJECT_DIR
-    PROJECT_WEBGPUSPEC_DIR = '%s/webgpuspec' % PROJECT_DIR
-    PROJECT_WEBBENCH_DIR = '%s/webbench' % PROJECT_DIR
-    PROJECT_WORK_DIR = '%s/work' % PROJECT_DIR
-    PROJECT_WPT_DIR = '%s/web-platform-tests' % PROJECT_DIR
-
-    HOME_DIR = use_slash.__func__(expanduser("~"))
+    WORKSPACE_DIR = Util.format_slash(WORKSPACE_DIR)
+    BACKUP_DIR =  Util.format_slash('%s/backup' % WORKSPACE_DIR)
+    PROJECT_DIR =  Util.format_slash('%s/project' % WORKSPACE_DIR)
+    PROJECT_ANGLE_DIR =  Util.format_slash('%s/angle' % PROJECT_DIR)
+    PROJECT_AQUARIUM_DIR =  Util.format_slash('%s/aquarium' % PROJECT_DIR)
+    PROJECT_CHROME_DIR =  Util.format_slash('%s/chromium' % PROJECT_DIR)
+    PROJECT_CHROME_SRC_DIR =  Util.format_slash('%s/src' % PROJECT_CHROME_DIR)
+    PROJECT_DAWN_DIR =  Util.format_slash('%s/dawn' % PROJECT_DIR)
+    PROJECT_DEPOT_TOOLS =  Util.format_slash('%s/depot_tools' % PROJECT_DIR)
+    PROJECT_MESA_DIR =  Util.format_slash('%s/mesa' % PROJECT_DIR)
+    PROJECT_MESA_BACKUP_DIR =  Util.format_slash('%s/backup' % PROJECT_MESA_DIR)
+    PROJECT_SKIA_DIR =  Util.format_slash('%s/skia' % PROJECT_DIR)
+    PROJECT_TFJS_DIR =  Util.format_slash('%s/tfjs' % PROJECT_DIR)
+    PROJECT_TOOLKIT_DIR =  Util.format_slash('%s/toolkit' % PROJECT_DIR)
+    GNP_SCRIPT_PATH =  Util.format_slash('%s/misc/gnp.py' %PROJECT_TOOLKIT_DIR)
+    PROJECT_V8_DIR =  Util.format_slash('%s/v8' % PROJECT_DIR)
+    PROJECT_WASM_DIR =  Util.format_slash('%s/wasm' % PROJECT_DIR)
+    PROJECT_WEBGL_DIR =  Util.format_slash('%s/WebGL' % PROJECT_DIR)
+    PROJECT_WEBGPUCTS_DIR =  Util.format_slash('%s/webgpucts' % PROJECT_DIR)
+    PROJECT_WEBGPUSPEC_DIR =  Util.format_slash('%s/webgpuspec' % PROJECT_DIR)
+    PROJECT_WEBBENCH_DIR =  Util.format_slash('%s/webbench' % PROJECT_DIR)
+    PROJECT_WORK_DIR =  Util.format_slash('%s/work' % PROJECT_DIR)
+    PROJECT_WPT_DIR =  Util.format_slash('%s/web-platform-tests' % PROJECT_DIR)
+    HOME_DIR = Util.format_slash(expanduser("~"))
 
     if HOST_OS == WINDOWS:
-        APPDATA_DIR = use_slash.__func__(os.getenv('APPDATA'))
-        PROGRAMFILES_DIR = use_slash.__func__(os.getenv('PROGRAMFILES'))
-        PROGRAMFILESX86_DIR = use_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
+        APPDATA_DIR = Util.format_slash(os.getenv('APPDATA'))
+        PROGRAMFILES_DIR = Util.format_slash(os.getenv('PROGRAMFILES'))
+        PROGRAMFILESX86_DIR = Util.format_slash(os.getenv('PROGRAMFILES(X86)'))
 
     if HOST_OS == WINDOWS:
         ENV_SPLITTER = ';'
@@ -1072,27 +1071,27 @@ class ScriptRepo:
     tmp_dir = Util.get_dir(__file__)
     while not os.path.exists(tmp_dir + '/.git') or os.path.basename(tmp_dir) == 'util':
         tmp_dir = Util.get_dir(tmp_dir)
-    ROOT_DIR = Util.use_slash(tmp_dir)
-    UTIL_DIR = '%s/util' % ROOT_DIR
-    TOOL_DIR = '%s/tool' % UTIL_DIR
+    ROOT_DIR = Util.format_slash(tmp_dir)
+    UTIL_DIR = Util.format_slash('%s/util' % ROOT_DIR)
+    TOOL_DIR = Util.format_slash('%s/tool' % UTIL_DIR)
     if Util.HOST_OS == Util.WINDOWS:
         Util.prepend_path(TOOL_DIR)
 
-    IGNORE_DIR = '%s/ignore' % ROOT_DIR
-    IGNORE_BOTO_FILE = '%s/boto.conf' % IGNORE_DIR
-    IGNORE_FAIL_FILE = '%s/FAIL' % IGNORE_DIR
-    IGNORE_LOG_DIR = '%s/log' % IGNORE_DIR
-    IGNORE_TIMESTAMP_DIR = '%s/timestamp' % IGNORE_DIR
-    IGNORE_CHROMIUM_DIR = '%s/chromium' % IGNORE_DIR
-    IGNORE_CHROMIUM_SELFBUILT_DIR = '%s/selfbuilt' % IGNORE_CHROMIUM_DIR
-    IGNORE_CHROMIUM_DOWNLOAD_DIR = '%s/download' % IGNORE_CHROMIUM_DIR
-    IGNORE_WEBMARK_DIR = '%s/webmark' % IGNORE_DIR
-    IGNORE_WEBMARK_RESULT_DIR = '%s/result' % IGNORE_WEBMARK_DIR
+    IGNORE_DIR = Util.format_slash('%s/ignore' % ROOT_DIR)
+    IGNORE_BOTO_FILE = Util.format_slash('%s/boto.conf' % IGNORE_DIR)
+    IGNORE_FAIL_FILE = Util.format_slash('%s/FAIL' % IGNORE_DIR)
+    IGNORE_LOG_DIR = Util.format_slash('%s/log' % IGNORE_DIR)
+    IGNORE_TIMESTAMP_DIR = Util.format_slash('%s/timestamp' % IGNORE_DIR)
+    IGNORE_CHROMIUM_DIR = Util.format_slash('%s/chromium' % IGNORE_DIR)
+    IGNORE_CHROMIUM_SELFBUILT_DIR = Util.format_slash('%s/selfbuilt' % IGNORE_CHROMIUM_DIR)
+    IGNORE_CHROMIUM_DOWNLOAD_DIR = Util.format_slash('%s/download' % IGNORE_CHROMIUM_DIR)
+    IGNORE_WEBMARK_DIR = Util.format_slash('%s/webmark' % IGNORE_DIR)
+    IGNORE_WEBMARK_RESULT_DIR = Util.format_slash('%s/result' % IGNORE_WEBMARK_DIR)
 
-    USER_DATA_DIR = '%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME)
-    W3C_DIR = '%s/w3c' % ROOT_DIR
-    CONTRIB_DIR = '%s/contrib' % ROOT_DIR
-    CHROMEDRIVER_PATH = '%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX)
+    USER_DATA_DIR = Util.format_slash('%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME))
+    W3C_DIR = Util.format_slash('%s/w3c' % ROOT_DIR)
+    CONTRIB_DIR = Util.format_slash('%s/contrib' % ROOT_DIR)
+    CHROMEDRIVER_PATH = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX)
 
 class Program(object):
     def __init__(self, parser):
@@ -1122,7 +1121,7 @@ python %(prog)s --root-dir --target-arch''' + parser.epilog
             script_name = os.path.basename(sys.argv[0]).replace('.py', '')
             log_file = ScriptRepo.IGNORE_LOG_DIR + '/' + script_name + '-' + timestamp + '.log'
         Util.info('Log file: %s' % log_file)
-        self.log_file = log_file
+        self.log_file = Util.format_slash(log_file)
 
         if args.proxy:
             proxy_parts = args.proxy.split(':')
@@ -1143,7 +1142,7 @@ python %(prog)s --root-dir --target-arch''' + parser.epilog
         else:
             root_dir = os.path.abspath(os.getcwd())
         Util.chdir(root_dir)
-        self.root_dir = root_dir
+        self.root_dir = Util.format_slash(root_dir)
 
         target_arch = args.target_arch
         if target_arch == 'default':
