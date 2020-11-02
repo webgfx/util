@@ -1116,9 +1116,8 @@ class ChromiumRepo():
         self.info = [self.FAKE_REV, self.FAKE_REV, {}]
 
     def get_working_dir_rev(self):
-        Util.chdir('%s/src' % self.root_dir)
+        Util.chdir(self.root_dir)
         cmd = 'git log --shortstat -1'
-        print('%shaha' % self._get_head_rev(cmd))
         return self._get_head_rev(cmd)
 
     def get_local_repo_rev(self):
