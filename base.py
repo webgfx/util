@@ -577,7 +577,7 @@ class Util:
         return (tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll)
 
     @staticmethod
-    def get_webdriver(browser_name, browser_path='', browser_options='', webdriver_path='', debug=False, target_os=''):
+    def get_webdriver(browser_name, browser_path='', browser_options='', webdriver_file='', debug=False, target_os=''):
         if not target_os:
             target_os = Util.HOST_OS
         # options
@@ -629,26 +629,23 @@ class Util:
                     browser_path = '%s/Nightly/firefox.exe' % Util.PROGRAMFILES_DIR
                 elif browser_name == 'edge':
                     browser_path = 'C:/windows/systemapps/Microsoft.MicrosoftEdge_8wekyb3d8bbwe/MicrosoftEdge.exe'
-        # webdriver_path
-        if not webdriver_path:
+        # webdriver_file
+        if not webdriver_file:
             if target_os == Util.CHROMEOS:
-                webdriver_path = '/user/local/chromedriver/chromedriver'
+                webdriver_file = '/user/local/chromedriver/chromedriver'
             elif browser_name == 'chrome':
                 if Util.HOST_OS == Util.DARWIN:
                     chrome_dir = browser_path.replace('/Chromium.app/Contents/MacOS/Chromium', '')
                 else:
                     chrome_dir = os.path.dirname(os.path.realpath(browser_path))
-                webdriver_path = chrome_dir + '/chromedriver'
-                webdriver_path = webdriver_path.replace('\\', '/')
-                if Util.HOST_OS == Util.WINDOWS:
-                    webdriver_path += '.exe'
+                webdriver_file = '%s%s' % (Util.format_slash(chrome_dir + '/chromedriver'), Util.EXEC_SUFFIX)
             elif target_os in [Util.DARWIN, Util.LINUX, Util.WINDOWS]:
                 if 'chrome' in browser_name:
-                    webdriver_path = ScriptRepo.CHROMEDRIVER_PATH
+                    webdriver_file = ScriptRepo.CHROMEDRIVER_FILE
                 elif 'firefox' in browser_name:
-                    webdriver_path = Util.FIREFOXDRIVER_PATH
+                    webdriver_file = Util.FIREFOXDRIVER_PATH
                 elif 'edge' in browser_name:
-                    webdriver_path = Util.EDGEDRIVER_PATH
+                    webdriver_file = Util.EDGEDRIVER_PATH
         # driver
         if target_os == Util.CHROMEOS:
             import chromeoswebdriver
@@ -663,24 +660,24 @@ class Util:
                     service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
                 else:
                     service_args = []
-                driver = webdriver.Chrome(executable_path=webdriver_path, chrome_options=chrome_options, service_args=service_args)
+                driver = webdriver.Chrome(executable_path=webdriver_file, chrome_options=chrome_options, service_args=service_args)
             elif 'firefox' in browser_name:
                 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
                 capabilities = DesiredCapabilities.FIREFOX
                 capabilities['marionette'] = True
                 # capabilities['binary'] = browser_path
-                driver = webdriver.Firefox(capabilities=capabilities, executable_path=webdriver_path)
+                driver = webdriver.Firefox(capabilities=capabilities, executable_path=webdriver_file)
             elif 'edge' in browser_name:
-                driver = webdriver.Edge(webdriver_path)
+                driver = webdriver.Edge(webdriver_file)
 
         if not browser_path:
             Util.error('Could not find module at %s' % browser_path)
         else:
             Util.info('Use module at %s' % browser_path)
-        if not webdriver_path:
-            Util.error('Could not find webdriver at %s' % webdriver_path)
+        if not webdriver_file:
+            Util.error('Could not find webdriver at %s' % webdriver_file)
         else:
-            Util.info('Use webdriver at %s' % webdriver_path)
+            Util.info('Use webdriver at %s' % webdriver_file)
         if not driver:
             Util.error('Could not get webdriver')
 
@@ -1028,7 +1025,6 @@ class Util:
     PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
     PROJECT_TFJS_DIR =  format_slash.__func__('%s/tfjs' % PROJECT_DIR)
     PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
-    GNP_SCRIPT_PATH =  format_slash.__func__('%s/misc/gnp.py' %PROJECT_TOOLKIT_DIR)
     PROJECT_V8_DIR =  format_slash.__func__('%s/v8' % PROJECT_DIR)
     PROJECT_WASM_DIR =  format_slash.__func__('%s/wasm' % PROJECT_DIR)
     PROJECT_WEBGL_DIR =  format_slash.__func__('%s/WebGL' % PROJECT_DIR)
@@ -1038,6 +1034,9 @@ class Util:
     PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
     PROJECT_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % PROJECT_DIR)
     HOME_DIR = format_slash.__func__(expanduser("~"))
+
+    GNP_SCRIPT =  format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
+    MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
 
     if HOST_OS == WINDOWS:
         APPDATA_DIR = format_slash.__func__(os.getenv('APPDATA'))
@@ -1081,20 +1080,20 @@ class ScriptRepo:
         Util.prepend_path(TOOL_DIR)
 
     IGNORE_DIR = Util.format_slash('%s/ignore' % ROOT_DIR)
-    IGNORE_BOTO_FILE = Util.format_slash('%s/boto.conf' % IGNORE_DIR)
-    IGNORE_FAIL_FILE = Util.format_slash('%s/FAIL' % IGNORE_DIR)
+    IGNORE_CHROMIUM_DIR = Util.format_slash('%s/chromium' % IGNORE_DIR)
+    IGNORE_CHROMIUM_DOWNLOAD_DIR = Util.format_slash('%s/download' % IGNORE_CHROMIUM_DIR)
     IGNORE_LOG_DIR = Util.format_slash('%s/log' % IGNORE_DIR)
     IGNORE_TIMESTAMP_DIR = Util.format_slash('%s/timestamp' % IGNORE_DIR)
-    IGNORE_CHROMIUM_DIR = Util.format_slash('%s/chromium' % IGNORE_DIR)
-    IGNORE_CHROMIUM_SELFBUILT_DIR = Util.format_slash('%s/selfbuilt' % IGNORE_CHROMIUM_DIR)
-    IGNORE_CHROMIUM_DOWNLOAD_DIR = Util.format_slash('%s/download' % IGNORE_CHROMIUM_DIR)
     IGNORE_WEBMARK_DIR = Util.format_slash('%s/webmark' % IGNORE_DIR)
     IGNORE_WEBMARK_RESULT_DIR = Util.format_slash('%s/result' % IGNORE_WEBMARK_DIR)
 
+    CONTRIB_DIR = Util.format_slash('%s/contrib' % ROOT_DIR)
     USER_DATA_DIR = Util.format_slash('%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME))
     W3C_DIR = Util.format_slash('%s/w3c' % ROOT_DIR)
-    CONTRIB_DIR = Util.format_slash('%s/contrib' % ROOT_DIR)
-    CHROMEDRIVER_PATH = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX))
+
+    CHROMEDRIVER_FILE = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX))
+    IGNORE_BOTO_FILE = Util.format_slash('%s/boto.conf' % IGNORE_DIR)
+    IGNORE_FAIL_FILE = Util.format_slash('%s/FAIL' % IGNORE_DIR)
 
 class ChromiumRepo():
     FAKE_REV = 0
