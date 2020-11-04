@@ -124,7 +124,7 @@ class Util:
                 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = process.communicate()
                 ret = process.returncode
-                out = (out + err).decode('utf-8')
+                out = (out + err).decode('utf-8').rstrip('\n')
             else:
                 ret = os.system(cmd)
                 out = ''
@@ -963,14 +963,22 @@ class Util:
         except Exception:
             pass_fail.append('All in %s' % result_file)
 
-        for result_str in ['pass_fail', 'fail_pass', 'fail_fail', 'pass_pass']:
-            result = eval(result_str)
-            results.append('[%s(%s)]' % (result_str.upper(), len(result)))
-            if result and result_str != 'pass_pass':
-                for item in result:
-                    results.append(item)
+        return pass_fail, fail_pass, fail_fail, len(pass_pass)
 
-        return len(pass_fail), results
+    @staticmethod
+    def get_gpu_info():
+        name = ''
+        driver = ''
+        if Util.HOST_OS == Util.LINUX:
+            _, name = Util.execute('glxinfo | grep Device', return_out=True)
+            name = name.split(':')[1].strip()
+            _, driver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
+            match = re.search('(Mesa.*)', driver)
+            if match:
+                driver = match.group(1)
+        elif Util.HOST_OS == Util.WINDOWS:
+            name = ''
+        return name, driver
 
     # constants
     MYSQL_SERVER = 'wp-27'
