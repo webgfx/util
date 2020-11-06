@@ -852,11 +852,11 @@ class Util:
 
     @staticmethod
     # committer date, instead of author date
-    def get_repo_head_date():
+    def get_repo_date():
         return Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', return_out=True, show_cmd=False)[1].rstrip('\n').rstrip('\r')
 
     @staticmethod
-    def get_repo_head_hash():
+    def get_repo_hash():
         cmd = 'git log --pretty=format:"%H" -1'
         result = Util.execute(cmd, return_out=True, show_cmd=False)
         return result[1].rstrip('\n').rstrip('\r')
@@ -922,7 +922,7 @@ class Util:
     def cal_backup_dir(rev=0):
         if not rev:
             rev = Util.get_repo_rev()
-        return '%s-%s-%s' % (Util.get_repo_head_date(), rev, Util.get_repo_head_hash())
+        return '%s-%s-%s' % (Util.get_repo_date(), rev, Util.get_repo_hash())
 
     @staticmethod
     def get_python_ver():
@@ -1130,7 +1130,8 @@ class ChromiumRepo():
         cmd = 'git log --shortstat -1'
         return self._get_head_rev(cmd)
 
-    def get_local_repo_rev(self):
+    def get_repo_rev(self):
+        Util.chdir(self.root_dir)
         cmd = 'git log --shortstat -1 origin/master'
         return self._get_head_rev(cmd)
 
@@ -1167,7 +1168,7 @@ class ChromiumRepo():
 
     def _get_info(self, min_rev, max_rev):
         info = self.info
-        head_rev = self.get_local_repo_rev()
+        head_rev = self.get_repo_rev()
         if max_rev > head_rev:
             Util.error('Revision %s is not ready' % max_rev)
         cmd = 'git log --shortstat origin/master~%s..origin/master~%s ' % (head_rev - min_rev + 1, head_rev - max_rev)
