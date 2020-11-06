@@ -102,16 +102,10 @@ class Util:
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        if Util.HOST_OS == Util.WINDOWS:
-            if log_file:
-                fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
-                Util.ensure_file(fail_file)
-                cmd = '(%s && del %s) 2>&1 | tee -a %s' % (cmd, fail_file, log_file)
-        else:
-            cmd = 'bash -o pipefail -c "%s' % cmd
-            if log_file:
-                cmd += ' 2>&1 | tee -a %s' % log_file
-            cmd += '; (exit ${PIPESTATUS})"'
+        if log_file:
+            fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
+            Util.ensure_file(fail_file)
+            cmd = '(%s && rm -f %s) 2>&1 | tee -a %s' % (cmd, fail_file, log_file)
 
         if show_duration:
             timer = Timer()
@@ -129,9 +123,9 @@ class Util:
                 ret = os.system(cmd)
                 out = ''
 
-            if log_file and Util.HOST_OS == Util.WINDOWS:
+            if log_file:
                 if os.path.exists(fail_file):
-                    #Util.ensure_nofile(fail_file)
+                    Util.ensure_nofile(fail_file)
                     ret = 1
                 else:
                     ret = 0
@@ -143,9 +137,9 @@ class Util:
 
         if ret:
             if exit_on_error:
-                Util.error('Failed to execute command "%s"' % cmd)
+                Util.error('Failed to execute command [%s]' % cmd)
             else:
-                Util.warning('Failed to execute command "%s"' % cmd)
+                Util.warning('Failed to execute command [%s]' % cmd)
 
         return result
 
@@ -935,8 +929,8 @@ class Util:
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
     @staticmethod
-    def get_test_result(result_file):
-        def _parse_result(key, val, path, fail_fail, fail_pass, pass_fail, pass_pass):
+    def get_test_result(result_file, type):
+        def _parse_result(key, val, path, pass_fail, fail_pass, fail_fail, pass_pass):
             if 'expected' in val:
                 if val['expected'] == 'FAIL' and val['actual'].startswith('FAIL'):
                     fail_fail.append(path)
@@ -948,21 +942,30 @@ class Util:
                     pass_pass.append(path)
             else:
                 for new_key, new_val in val.items():
-                    _parse_result(new_key, new_val, '%s/%s' % (path, new_key), fail_fail, fail_pass, pass_fail, pass_pass)
+                    _parse_result(new_key, new_val, '%s/%s' % (path, new_key), pass_fail, fail_pass, fail_fail, pass_pass)
 
-        fail_fail = []
-        fail_pass = []
         pass_fail = []
+        fail_pass = []
+        fail_fail = []
         pass_pass = []
-        results = []
 
         try:
             json_result = json.load(open(result_file))
-            for key, val in json_result['tests'].items():
-                _parse_result(key, val, key, fail_fail, fail_pass, pass_fail, pass_pass)
         except Exception:
             pass_fail.append('All in %s' % result_file)
 
+        if type == 'gtest_angle':
+            for key, val in json_result['tests'].items():
+                _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
+        elif type == 'gtest_chrome':
+            iters = json_result['per_iteration_data']
+            for iter in iters:
+                for name in iter:
+                    status = iter[name][0]['status']
+                    if status == 'SUCCESS':
+                        pass_pass.append(name)
+                    elif status == 'FAILURE':
+                        pass_fail.append(name)
         return pass_fail, fail_pass, fail_fail, len(pass_pass)
 
     @staticmethod
