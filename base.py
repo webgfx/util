@@ -746,12 +746,10 @@ class Util:
 
     @staticmethod
     def need_sudo(path):
-        if re.match('chroot/sbin', path):
-            return True
-        elif re.match('/var', path):
-            return True
-        elif re.match('/etc/apache2', path):
-            return True
+        sudo_paths = ['chroot/sbin', '/var', '/etc']
+        for sudo_path in sudo_paths:
+            if re.match(sudo_path, path):
+                return True
         else:
             return False
 
