@@ -219,6 +219,13 @@ class Util:
         os.remove(file_path)
 
     @staticmethod
+    def ensure_symlink(src, dst):
+        if os.path.exists(dst):
+            return
+
+        os.symlink(src, dst)
+
+    @staticmethod
     def pkg_installed(pkg):
         cmd = 'dpkg -s ' + pkg
         result = Util.execute(cmd, return_out=True, show_cmd=False, exit_on_error=False)
@@ -426,7 +433,7 @@ class Util:
 
     @staticmethod
     # Get the dir of symbolic link, for example: /workspace/project/chromium instead of /workspace/project/gyagp/share/python
-    def get_symbolic_link_dir():
+    def get_symlink_dir():
         if sys.argv[0][0] == '/':  # Absolute path
             script_path = sys.argv[0]
         else:
@@ -754,13 +761,13 @@ class Util:
             return False
 
     # return True if there is a real update
-    # is_sylk: If true, just copy as a symbolic link
+    # is_symlink: If true, just copy as a symbolic link
     # dir_xxx means directory
     # name_xxx means file name
     # path_xxx means full path of file
     # need_bk means if it needs .bk file
     @staticmethod
-    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_sylk=False, need_bk=True):
+    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_symlink=False, need_bk=True):
         if not os.path.exists(dest_dir):
             # we do not warn here as it's a normal case
             # warning(dest_dir + ' does not exist')
@@ -785,11 +792,11 @@ class Util:
         need_bk_tmp = False
         has_update = False
 
-        if not Util.has_path(path_dest) or Util.has_link(path_dest) != is_sylk:
+        if not Util.has_path(path_dest) or Util.has_link(path_dest) != is_symlink:
             need_copy = True
             need_bk_tmp = True
             has_update = True
-        elif is_sylk:  # both are symbolic link
+        elif is_symlink:  # both are symbolic link
             if Util.get_link(path_dest) != path_src:
                 need_copy = True
                 need_bk_tmp = True
@@ -830,7 +837,7 @@ class Util:
                 cmd = 'sudo ' + cmd
             Util.execute(cmd, show_cmd=False, exit_on_error=False)
 
-            if is_sylk:
+            if is_symlink:
                 if Util.HOST_OS == Util.WINDOWS:
                     cmd = 'mklink "%s" "%s"' % (path_dest, path_src)
                 else:
@@ -1020,6 +1027,8 @@ class Util:
     WORKSPACE_DIR = format_slash.__func__(WORKSPACE_DIR)
     BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
     PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
+    SERVER_DIR = format_slash.__func__('%s/server' % WORKSPACE_DIR)
+
     PROJECT_ANGLE_DIR =  format_slash.__func__('%s/angle' % PROJECT_DIR)
     PROJECT_AQUARIUM_DIR =  format_slash.__func__('%s/aquarium' % PROJECT_DIR)
     PROJECT_CHROME_DIR =  format_slash.__func__('%s/chromium' % PROJECT_DIR)
@@ -1317,7 +1326,7 @@ python %(prog)s --root-dir --target-arch''' + parser.epilog
                 Util.error('root_dir %s does not exist' % args.root_dir)
             root_dir = args.root_dir
         elif os.path.islink(sys.argv[0]):
-            root_dir = Util.get_symbolic_link_dir()
+            root_dir = Util.get_symlink_dir()
         else:
             root_dir = os.path.abspath(os.getcwd())
         Util.chdir(root_dir)
