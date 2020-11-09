@@ -746,7 +746,9 @@ class Util:
 
     @staticmethod
     def need_sudo(path):
-        if re.match('/var', path):
+        if re.match('chroot/sbin', path):
+            return True
+        elif re.match('/var', path):
             return True
         elif re.match('/etc/apache2', path):
             return True
@@ -812,12 +814,7 @@ class Util:
                 has_update = True
         # print need_copy, need_bk_tmp, has_update
 
-        if re.search('chroot/sbin', dest_dir):
-            need_sudo = True
-        elif re.search(Util.HOME_DIR, dest_dir) or re.search(Util.WORKSPACE_DIR, dest_dir):
-            need_sudo = False
-        else:
-            need_sudo = True
+        need_sudo = Util.need_sudo(dest_dir)
 
         if need_bk_tmp and need_bk:
             cmd = 'rm -f "%s"' % path_dest_bk
