@@ -982,7 +982,15 @@ class Util:
             if match:
                 driver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
-            name = ''
+            cmd = 'wmic path win32_VideoController get Name,DriverVersion /value'
+            lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\r\r\n')
+            for line in lines:
+                match = re.match('(.*)=(.*)', line)
+                if match:
+                    if match.group(1) == 'Name':
+                        name = match.group(2)
+                    elif match.group(1) == 'DriverVersion':
+                        driver = match.group(2)
         return name, driver
 
     # constants
