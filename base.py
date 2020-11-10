@@ -956,7 +956,9 @@ class Util:
         except Exception:
             pass_fail.append('All in %s' % result_file)
 
-        if type == 'gtest_angle':
+        if not json_result:
+            pass_fail.append('All in %s' % result_file)
+        elif type == 'gtest_angle':
             for key, val in json_result['tests'].items():
                 _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
         elif type == 'gtest_chrome':
