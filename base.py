@@ -1013,13 +1013,10 @@ class Util:
         if re.search(CHROMEOS, result[1]):
             HOST_OS = CHROMEOS
 
-    if HOST_OS == CHROMEOS:
+    if HOST_OS in [CHROMEOS, LINUX]:
         HOST_OS_RELEASE = platform.platform()
     elif HOST_OS == DARWIN:
         HOST_OS_RELEASE = platform.mac_ver()[0]
-    elif HOST_OS == LINUX:
-        dist = platform.linux_distribution()
-        HOST_OS_RELEASE = '%s %s' % (dist[0], dist[1])
     elif HOST_OS == WINDOWS:
         HOST_OS_RELEASE = platform.version()
 
