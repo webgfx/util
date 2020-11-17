@@ -977,6 +977,7 @@ class Util:
         name = ''
         driver = ''
         if Util.HOST_OS == Util.LINUX:
+            Util.ensure_pkg('mesa-utils')
             _, name = Util.execute('glxinfo | grep Device', return_out=True)
             name = name.split(':')[1].strip()
             _, driver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
@@ -1010,13 +1011,16 @@ class Util:
     HOST_OS_RELEASE = '0.0'
     if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
-        if re.search(CHROMEOS, result[1]):
+        if re.search(CHROMEOS, result):
             HOST_OS = CHROMEOS
 
-    if HOST_OS in [CHROMEOS, LINUX]:
+    if HOST_OS in [CHROMEOS]:
         HOST_OS_RELEASE = platform.platform()
     elif HOST_OS == DARWIN:
         HOST_OS_RELEASE = platform.mac_ver()[0]
+    elif HOST_OS == LINUX:
+        result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
+        HOST_OS_RELEASE = re.search('DISTRIB_DESCRIPTION=\"(.*)\"', result).group(1)
     elif HOST_OS == WINDOWS:
         HOST_OS_RELEASE = platform.version()
 
