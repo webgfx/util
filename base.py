@@ -955,21 +955,19 @@ class Util:
             json_result = json.load(open(result_file))
         except Exception:
             pass_fail.append('All in %s' % result_file)
-
-        if not json_result:
-            pass_fail.append('All in %s' % result_file)
-        elif type == 'gtest_angle':
-            for key, val in json_result['tests'].items():
-                _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
-        elif type == 'gtest_chrome':
-            iters = json_result['per_iteration_data']
-            for iter in iters:
-                for name in iter:
-                    status = iter[name][0]['status']
-                    if status == 'SUCCESS':
-                        pass_pass.append(name)
-                    elif status == 'FAILURE':
-                        pass_fail.append(name)
+        else:
+            if type == 'gtest_angle':
+                for key, val in json_result['tests'].items():
+                    _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
+            elif type == 'gtest_chrome':
+                iters = json_result['per_iteration_data']
+                for iter in iters:
+                    for name in iter:
+                        status = iter[name][0]['status']
+                        if status == 'SUCCESS':
+                            pass_pass.append(name)
+                        elif status == 'FAILURE':
+                            pass_fail.append(name)
         return pass_fail, fail_pass, fail_fail, len(pass_pass)
 
     @staticmethod
