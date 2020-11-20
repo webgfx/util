@@ -968,7 +968,7 @@ class Util:
                             pass_pass.append(name)
                         elif status == 'FAILURE':
                             pass_fail.append(name)
-        return pass_fail, fail_pass, fail_fail, len(pass_pass)
+        return pass_fail, fail_pass, fail_fail, pass_pass
 
     @staticmethod
     def get_gpu_info():
