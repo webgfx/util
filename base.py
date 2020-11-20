@@ -32,6 +32,7 @@ import time
 import zipfile
 
 try:
+    import lsb_release    
     import urllib2
 except ImportError:
     pass
@@ -995,6 +996,7 @@ class Util:
         return name, driver
 
     # constants
+    PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
     SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'windows'
@@ -1006,7 +1008,6 @@ class Util:
     BACKUP_PATTERN = r'\d{8}-(\d*)-[a-z0-9]{40}$' # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
     HOST_OS = platform.system().lower()
-    HOST_OS_RELEASE = '0.0'
     if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
         if re.search(CHROMEOS, result):
@@ -1017,8 +1018,12 @@ class Util:
     elif HOST_OS == DARWIN:
         HOST_OS_RELEASE = platform.mac_ver()[0]
     elif HOST_OS == LINUX:
-        result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
-        HOST_OS_RELEASE = re.search('DISTRIB_DESCRIPTION=\"(.*)\"', result).group(1)
+        if PYTHON_MAJOR == 3:
+            HOST_OS_RELEASE = lsb_release.get_distro_information()['RELEASE']
+            HOST_OS_DESCRIPTION = lsb_release.get_distro_information()['DESCRIPTION']
+        else:
+            HOST_OS_RELEASE = platform.linux_distribution()[1]
+            HOST_OS_DESCRIPTION = '%s %s' % (platform.linux_distribution()[0], platform.linux_distribution()[1])
     elif HOST_OS == WINDOWS:
         HOST_OS_RELEASE = platform.version()
 
