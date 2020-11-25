@@ -32,7 +32,7 @@ import time
 import zipfile
 
 try:
-    import lsb_release    
+    import lsb_release
     import urllib2
 except ImportError:
     pass
@@ -995,6 +995,14 @@ class Util:
                         driver = match.group(2)
         return name, driver
 
+    def get_build_from_server(server, project_dir, rev):
+        if HOST_NAME == server:
+            return
+        if HOST_OS == Util.LINUX:
+            pass
+        elif HOST_OS == Util.WINDOWS:
+            pass
+
     # constants
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
@@ -1038,6 +1046,12 @@ class Util:
         WORKSPACE_DIR = 'd:/workspace'
     else:
         WORKSPACE_DIR = '/workspace'
+
+    if HOST_OS == WINDOWS:
+        GPUTEST_SERVER = 'wp-28'
+    elif HOST_OS == LINUX:
+        GPUETST_SERVER = 'shwde9908'
+
     WORKSPACE_DIR = format_slash.__func__(WORKSPACE_DIR)
     BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
     PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
@@ -1047,6 +1061,8 @@ class Util:
     PROJECT_AQUARIUM_DIR =  format_slash.__func__('%s/aquarium' % PROJECT_DIR)
     PROJECT_CHROME_DIR =  format_slash.__func__('%s/chromium' % PROJECT_DIR)
     PROJECT_CHROME_SRC_DIR =  format_slash.__func__('%s/src' % PROJECT_CHROME_DIR)
+    PROJECT_CHROME_GPUTEST_DIR =  format_slash.__func__('%s/chromium-gputest' % PROJECT_DIR)
+    PROJECT_CHROME_GPUTEST_SRC_DIR =  format_slash.__func__('%s/src' % PROJECT_CHROME_GPUTEST_DIR)
     PROJECT_DAWN_DIR =  format_slash.__func__('%s/dawn' % PROJECT_DIR)
     PROJECT_DEPOT_TOOLS =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
     PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
