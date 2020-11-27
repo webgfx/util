@@ -98,40 +98,34 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
 
 class Util:
     @staticmethod
-    def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, log_file=''):
+    def execute(cmd, show_cmd=True, exit_on_error=True, show_duration=False, dryrun=False, log_file=''):
         orig_cmd = cmd
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        if log_file:
-            fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
+        fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
+        if not dryrun:
             Util.ensure_file(fail_file)
-            cmd = '(%s && rm -f %s) 2>&1 | tee -a %s' % (cmd, fail_file, log_file)
+            cmd = '%s && rm -f %s' % (cmd, fail_file)
+
+        if log_file:
+            cmd = '(%s) 2>&1 | tee -a %s' % (cmd, log_file)
 
         if show_duration:
             timer = Timer()
 
-        if dryrun:
-            ret = 0
-            out = ''
+        out = ''
+        if not dryrun:
+            # shell must be True
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = process.communicate()
+            out = (out + err).decode('utf-8').rstrip('\n')
+
+        if os.path.exists(fail_file):
+            Util.ensure_nofile(fail_file)
+            ret = 1
         else:
-            if return_out:
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (out, err) = process.communicate()
-                ret = process.returncode
-                out = (out + err).decode('utf-8').rstrip('\n')
-            else:
-                ret = os.system(cmd)
-                out = ''
-
-            if log_file:
-                if os.path.exists(fail_file):
-                    Util.ensure_nofile(fail_file)
-                    ret = 1
-                else:
-                    ret = 0
-
-        result = [ret, out]
+            ret = 0
 
         if show_duration:
             Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
@@ -142,7 +136,39 @@ class Util:
             else:
                 Util.warning('Failed to execute command [%s]' % cmd)
 
-        return result
+        return  [ret, out]
+
+    @staticmethod
+    # Do not care about out, log_file, dryrun
+    # Do care about timeout
+    def simple_execute(cmd, show_cmd=True, show_duration=False, timeout=0):
+        if show_duration:
+            timer = Timer()
+
+        if show_cmd:
+            Util.cmd(cmd)
+
+        # fail_file can be deleted only if shell is False
+        if timeout:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process_timer = threading.Timer(timeout, process.kill)
+            process_timer.start()
+            try:
+                process.communicate()
+            finally:
+                if process_timer.is_alive():
+                    ret = 0
+                else:
+                    ret = 1
+                process_timer.cancel()
+        else:
+            os.system(cmd)
+            ret = 0
+
+        if show_duration:
+            Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), cmd, inspect.stack()[1][3]))
+
+        return ret
 
     @staticmethod
     def _msg(msg, show_strace=False):
