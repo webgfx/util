@@ -1033,6 +1033,7 @@ class Util:
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
     SMTP_SERVER = 'wp-27.sh.intel.com'
+    GPUTEST_SERVER = 'wp-28'
     WINDOWS = 'windows'
     LINUX = 'linux'
     DARWIN = 'darwin'
@@ -1072,11 +1073,6 @@ class Util:
         WORKSPACE_DIR = 'd:/workspace'
     else:
         WORKSPACE_DIR = '/workspace'
-
-    if HOST_OS == WINDOWS:
-        GPUTEST_SERVER = 'wp-28'
-    elif HOST_OS == LINUX:
-        GPUETST_SERVER = 'shwde9908'
 
     WORKSPACE_DIR = format_slash.__func__(WORKSPACE_DIR)
     BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
