@@ -98,7 +98,10 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
 
 class Util:
     @staticmethod
-    def execute(cmd, show_cmd=True, exit_on_error=True, show_duration=False, dryrun=False, log_file=''):
+    def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, log_file='', timeout=0):
+        if show_duration:
+            timer = Timer()
+
         orig_cmd = cmd
         if show_cmd:
             Util.cmd(orig_cmd)
@@ -111,24 +114,27 @@ class Util:
         if log_file:
             cmd = '(%s) 2>&1 | tee -a %s' % (cmd, log_file)
 
-        if show_duration:
-            timer = Timer()
-
+        ret = 0
         out = ''
-        if not dryrun:
-            # shell must be True
+        if timeout or return_out:
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = process.communicate()
-            out = (out + err).decode('utf-8').rstrip('\n')
+            if timeout:
+                process_timer = threading.Timer(timeout, process.kill)
+                process_timer.start()
+            try:
+                out, _ = process.communicate()
+            finally:
+                if timeout:
+                    if not process_timer.is_alive():
+                        ret = 1
+                    process_timer.cancel()
+        else:
+            ret = os.system(cmd)
 
         if os.path.exists(fail_file):
             Util.ensure_nofile(fail_file)
-            ret = 1
-        else:
-            ret = 0
-
-        if show_duration:
-            Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
+            if not ret:
+                ret = 1
 
         if ret:
             if exit_on_error:
@@ -136,12 +142,15 @@ class Util:
             else:
                 Util.warning('Failed to execute command [%s]' % cmd)
 
+        if show_duration:
+            Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
+
         return  [ret, out]
 
     @staticmethod
-    # Do not care about out, log_file, dryrun
+    # Do not care about out, log_file
     # Do care about timeout
-    def simple_execute(cmd, show_cmd=True, show_duration=False, timeout=0):
+    def simple_execute(cmd, show_cmd=True, exit_on_error=True, show_duration=False, dryrun=False, timeout=0):
         if show_duration:
             timer = Timer()
 
@@ -162,13 +171,18 @@ class Util:
                     ret = 1
                 process_timer.cancel()
         else:
-            os.system(cmd)
-            ret = 0
+            ret = os.system(cmd)
+
+        if ret:
+            if exit_on_error:
+                Util.error('Failed to execute command [%s]' % cmd)
+            else:
+                Util.warning('Failed to execute command [%s]' % cmd)
 
         if show_duration:
             Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), cmd, inspect.stack()[1][3]))
 
-        return ret
+        return [ret, '']
 
     @staticmethod
     def _msg(msg, show_strace=False):
@@ -255,8 +269,8 @@ class Util:
     @staticmethod
     def pkg_installed(pkg):
         cmd = 'dpkg -s ' + pkg
-        result = Util.execute(cmd, return_out=True, show_cmd=False, exit_on_error=False)
-        if result[0]:
+        ret, _ = Util.execute(cmd, show_cmd=False, exit_on_error=False)
+        if ret:
             return False
         else:
             return True
@@ -743,8 +757,8 @@ class Util:
             cmd = 'file "%s"' % path
             if Util.need_sudo(path):
                 cmd = 'sudo ' + cmd
-            result = Util.execute(cmd, show_cmd=False, return_out=True)
-            if re.search('symbolic link to', result[1]):
+            _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+            if re.search('symbolic link to', out):
                 return True
             else:
                 return False
@@ -769,8 +783,8 @@ class Util:
             cmd = 'file "%s"' % path
             if Util.need_sudo(path):
                 cmd = 'sudo ' + cmd
-            result = Util.execute(cmd, show_cmd=False, return_out=True)
-            match = re.search('symbolic link to (.*)', result[1])
+            _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+            match = re.search('symbolic link to (.*)', out)
             link = match.group(1).strip()
             if Util.HOST_OS == Util.WINDOWS:
                 link = Util.use_drive(link)
@@ -882,25 +896,25 @@ class Util:
     @staticmethod
     # committer date, instead of author date
     def get_repo_date():
-        return Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', return_out=True, show_cmd=False)[1].rstrip('\n').rstrip('\r')
+        return Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', show_cmd=False, return_out=True)[1].rstrip('\n').rstrip('\r')
 
     @staticmethod
     def get_repo_hash():
         cmd = 'git log --pretty=format:"%H" -1'
-        result = Util.execute(cmd, return_out=True, show_cmd=False)
-        return result[1].rstrip('\n').rstrip('\r')
+        _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+        return out.rstrip('\n').rstrip('\r')
 
     @staticmethod
     def get_repo_rev():
         cmd = 'git rev-list --count HEAD'
-        result = Util.execute(cmd, return_out=True, show_cmd=False)
-        return result[1].rstrip('\n').rstrip('\r')
+        _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+        return out.rstrip('\n').rstrip('\r')
 
     @staticmethod
     def get_repo_hashes():
         cmd = 'git log --pretty=format:"%H" --reverse'
-        result = Util.execute(cmd, return_out=True, show_cmd=False)
-        return result[1].split('\n')
+        _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+        return out.split('\n')
 
     @staticmethod
     def get_backup_dir(backup_dir, rev):
@@ -925,7 +939,7 @@ class Util:
                     rev_dir = file
                     return (rev_dir, rev)
             else:
-                Util.error('Could not find mesa build %s' % rev)
+                Util.error('Could not find backup %s' % rev)
 
     @staticmethod
     def set_mesa(dir, rev=0, type='iris'):
@@ -1032,8 +1046,8 @@ class Util:
     # constants
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
+    BACKUP_SERVER = 'wp-27'
     SMTP_SERVER = 'wp-27.sh.intel.com'
-    GPUTEST_SERVER = 'wp-28'
     WINDOWS = 'windows'
     LINUX = 'linux'
     DARWIN = 'darwin'
@@ -1228,8 +1242,8 @@ class ChromiumRepo():
         if max_rev > head_rev:
             Util.error('Revision %s is not ready' % max_rev)
         cmd = 'git log --shortstat origin/master~%s..origin/master~%s ' % (head_rev - min_rev + 1, head_rev - max_rev)
-        result = Util.execute(cmd, show_cmd=False, return_out=True)
-        lines = result[1].split('\n')
+        _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+        lines = out.split('\n')
 
         rev_info = info[self.INFO_INDEX_REV_INFO]
         self._parse_lines(lines, rev_info)
@@ -1326,8 +1340,8 @@ class ChromiumRepo():
         return (tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll)
 
     def _get_head_rev(self, cmd):
-        result = Util.execute(cmd, show_cmd=False, return_out=True)
-        lines = result[1].split('\n')
+        _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+        lines = out.split('\n')
         rev_info = {}
         self._parse_lines(lines, rev_info=rev_info)
         for key in rev_info:
@@ -1397,8 +1411,13 @@ python %(prog)s --root-dir --target-arch''' + parser.epilog
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
 
+        Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
+
     def _execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, return_out=return_out, show_duration=show_duration, dryrun=dryrun, log_file=self.log_file)
+
+    def _simple_execute(self, cmd, show_cmd=True, exit_on_error=True, show_duration=False, dryrun=False):
+        return Util.simple_execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, show_duration=show_duration, dryrun=dryrun)
 
     def _set_boto(self):
         if not self.args.proxy:
