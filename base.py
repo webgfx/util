@@ -917,34 +917,9 @@ class Util:
         return out.split('\n')
 
     @staticmethod
-    def get_backup_dir(backup_dir, rev):
-        if rev == 'latest':
-            rev = -1
-            rev_dir = ''
-            files = os.listdir(backup_dir)
-            for file in files:
-                match = re.match(Util.BACKUP_PATTERN, file)
-                if match:
-                    tmp_rev = int(match.group(1))
-                    if tmp_rev > rev:
-                        rev_dir = file
-                        rev = tmp_rev
-
-            return (rev_dir, rev)
-        else:
-            files = os.listdir(backup_dir)
-            for file in files:
-                match = re.search(Util.BACKUP_PATTERN, file)
-                if match:
-                    rev_dir = file
-                    return (rev_dir, rev)
-            else:
-                Util.error('Could not find backup %s' % rev)
-
-    @staticmethod
     def set_mesa(dir, rev=0, type='iris'):
         if rev == 'system':
-            Util.ensure_pkg('mesa-vulkan-drivers')
+            #Util.ensure_pkg('mesa-vulkan-drivers')
             Util.info('Use system Mesa')
         else:
             (rev_dir, rev) = Util.get_backup_dir(dir, rev)
@@ -1016,8 +991,8 @@ class Util:
         name = ''
         driver = ''
         if Util.HOST_OS == Util.LINUX:
-            Util.ensure_pkg('mesa-utils')
-            _, name = Util.execute('glxinfo | grep Device', return_out=True)
+            #Util.ensure_pkg('mesa-utils')
+            _, name = Util.execute('glxinfo | grep Device', return_out=True, log_file='')
             name = name.split(':')[1].strip()
             _, driver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
             match = re.search('(Mesa.*)', driver)
@@ -1035,13 +1010,62 @@ class Util:
                         driver = match.group(2)
         return name, driver
 
-    def get_build_from_server(server, project_dir, rev):
-        if HOST_NAME == server:
-            return
-        if HOST_OS == Util.LINUX:
-            pass
-        elif HOST_OS == Util.WINDOWS:
-            pass
+    @staticmethod
+    def get_backup_dir(backup_dir, rev):
+        if rev == 'latest':
+            rev = -1
+            rev_dir = ''
+            files = os.listdir(backup_dir)
+            for file in files:
+                match = re.match(Util.BACKUP_PATTERN, file)
+                if match:
+                    tmp_rev = int(match.group(1))
+                    if tmp_rev > rev:
+                        rev_dir = file
+                        rev = tmp_rev
+
+            return (rev_dir, rev)
+        else:
+            files = os.listdir(backup_dir)
+            for file in files:
+                match = re.search(Util.BACKUP_PATTERN, file)
+                if match:
+                    rev_dir = file
+                    return (rev_dir, rev)
+            else:
+                Util.error('Could not find backup %s' % rev)
+
+    @staticmethod
+    def remotify_cmd(server, cmd, extra_arg=''):
+        new_cmd = 'ssh wp@%s' % server
+        if extra_arg:
+            new_cmd += ' %s' % extra_arg
+        new_cmd += ' "%s"' % cmd
+        return new_cmd
+
+    @staticmethod
+    def check_server_backup(server, virtual_project, rev_file):
+        cmd = 'ls %s/%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project, rev_file)
+        cmd = Util.remotify_cmd(server, cmd)
+        ret, _ = Util.execute(cmd, exit_on_error=False)
+        if ret:
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def get_server_latest_backup_rev(server, project_dir):
+        cmd = 'ls -1t %s/%s/%s/ | head -1' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
+        cmd = Util.remotify_cmd(server, cmd)
+        _, out = Util.execute(cmd, return_out=True)
+        match = re.match('%s.zip' % Util.BACKUP_PATTERN, out)
+        rev = match.group(1)
+        rev_file = match.group(0)
+        print(rev)
+        print(rev_file)
+        exit(1)
+
+        return rev_file, rev
 
     # constants
     PYTHON_MAJOR = sys.version_info.major
