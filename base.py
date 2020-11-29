@@ -1004,10 +1004,11 @@ class Util:
             for line in lines:
                 match = re.match('(.*)=(.*)', line)
                 if match:
-                    if match.group(1) == 'Name':
-                        name = match.group(2)
-                    elif match.group(1) == 'DriverVersion':
+                    if match.group(1) == 'DriverVersion':
                         driver = match.group(2)
+                    elif match.group(1) == 'Name':
+                        name = match.group(2)
+                        break
         return name, driver
 
     @staticmethod
