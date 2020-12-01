@@ -1055,18 +1055,36 @@ class Util:
             return True
 
     @staticmethod
-    def get_server_latest_backup_rev(server, project_dir):
-        cmd = 'ls -1t %s/%s/%s/ | head -1' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
-        cmd = Util.remotify_cmd(server, cmd)
+    def get_server_backup(virtual_project, rev='latest'):
+        cmd = 'ls -1t /workspace/backup/%s/%s/ | head -1' % (Util.HOST_OS, virtual_project)
+        cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
         _, out = Util.execute(cmd, return_out=True)
-        match = re.match('%s.zip' % Util.BACKUP_PATTERN, out)
+        match = re.search('%s' % Util.BACKUP_PATTERN, out)
         rev = match.group(1)
-        rev_file = match.group(0)
-        print(rev)
-        print(rev_file)
-        exit(1)
+        rev_name = match.group(0)
+        rev_file = '%s.zip' % rev_name
 
-        return rev_file, rev
+        local_backup_dir = '%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
+        Util.ensure_dir(local_backup_dir)
+        if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists('%s/%s' % (local_backup_dir, rev_file)):
+            Util.execute('scp wp@%s:/workspace/backup/%s/%s/%s %s' % (Util.BACKUP_SERVER, Util.HOST_OS, virtual_project, rev_file, local_backup_dir))
+        if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)):
+            # to workaround filename too long issue, we need to extract to tmp folder first
+            zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall('%s/%s' % (Util.WORKSPACE_DIR, rev_name))
+            shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
+
+        return rev_name, rev
+
+    @staticmethod
+    def get_local_backup(virtual_project, rev='latest'):
+        local_backup_dir = '%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
+        for file_name in sorted(os.listdir(local_backup_dir), reverse=True):
+            match = re.match('%s$' % Util.BACKUP_PATTERN, file_name)
+            if match:
+                rev_name = file_name
+                rev = match.group(1)
+                break
+        return rev_name, rev
 
     # constants
     PYTHON_MAJOR = sys.version_info.major
@@ -1079,7 +1097,7 @@ class Util:
     CHROMEOS = 'chromeos'
     ANDROID = 'android'
     MAX_REV = 9999999
-    BACKUP_PATTERN = r'\d{8}-(\d*)-[a-z0-9]{40}$' # <date>-<rev>-<hash>
+    BACKUP_PATTERN = r'\d{8}-(\d*)-[a-z0-9]{40}' # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
     HOST_OS = platform.system().lower()
     if HOST_OS == LINUX:
