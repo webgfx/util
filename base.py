@@ -1089,7 +1089,7 @@ class Util:
     # constants
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
-    BACKUP_SERVER = 'wp-27'
+    BACKUP_SERVER = 'wp-27.sh.intel.com'
     SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'windows'
     LINUX = 'linux'
