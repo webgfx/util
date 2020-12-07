@@ -922,8 +922,8 @@ class Util:
             #Util.ensure_pkg('mesa-vulkan-drivers')
             Util.info('Use system Mesa')
         else:
-            (rev_dir, rev) = Util.get_backup_dir(dir, rev)
-            mesa_dir = '%s/%s' % (dir, rev_dir)
+            (rev_name, rev) = Util.get_backup_dir(dir, rev)
+            mesa_dir = '%s/%s' % (dir, rev_name)
             Util.set_env('LD_LIBRARY_PATH', '%s/lib:%s/lib/x86_64-linux-gnu' % (mesa_dir, mesa_dir), verbose=True)
             Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
             Util.set_env('VK_ICD_FILENAMES', '%s/share/vulkan/icd.d/intel_icd.x86_64.json' % mesa_dir, verbose=True)
@@ -992,10 +992,14 @@ class Util:
         driver = ''
         if Util.HOST_OS == Util.LINUX:
             #Util.ensure_pkg('mesa-utils')
-            _, name = Util.execute('glxinfo | grep Device', return_out=True, log_file='')
-            name = name.split(':')[1].strip()
-            _, driver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
-            match = re.search('(Mesa.*)', driver)
+            _, name = Util.execute('lspci | grep VGA', return_out=True, log_file='')
+            name = name.split('controller:')[1].strip()
+            if 'NVIDIA' in name:
+                _, driver = Util.execute('nvidia-smi |grep Driver', return_out=True)
+                match = re.search('Driver Version: (\d+.\d+)', driver)
+            else:
+                _, driver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
+                match = re.search('(Mesa.*)', driver)
             if match:
                 driver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
@@ -1015,24 +1019,24 @@ class Util:
     def get_backup_dir(backup_dir, rev):
         if rev == 'latest':
             rev = -1
-            rev_dir = ''
+            rev_name = ''
             files = os.listdir(backup_dir)
             for file in files:
-                match = re.match(Util.BACKUP_PATTERN, file)
+                match = re.match('%s$' % Util.BACKUP_PATTERN, file)
                 if match:
                     tmp_rev = int(match.group(1))
                     if tmp_rev > rev:
-                        rev_dir = file
+                        rev_name = file
                         rev = tmp_rev
 
-            return (rev_dir, rev)
+            return (rev_name, rev)
         else:
             files = os.listdir(backup_dir)
             for file in files:
                 match = re.search(Util.BACKUP_PATTERN, file)
                 if match:
-                    rev_dir = file
-                    return (rev_dir, rev)
+                    rev_name = file
+                    return (rev_name, rev)
             else:
                 Util.error('Could not find backup %s' % rev)
 
@@ -1062,16 +1066,24 @@ class Util:
         match = re.search('%s' % Util.BACKUP_PATTERN, out)
         rev = match.group(1)
         rev_name = match.group(0)
-        rev_file = '%s.zip' % rev_name
+
+        if Util.HOST_OS == Util.LINUX:
+            rev_file = '%s.tar.gz' % rev_name
+        elif Util.HOST_OS == Util.WINDOWS:
+            rev_file = '%s.zip' % rev_name
 
         local_backup_dir = '%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
         Util.ensure_dir(local_backup_dir)
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists('%s/%s' % (local_backup_dir, rev_file)):
             Util.execute('scp wp@%s:/workspace/backup/%s/%s/%s %s' % (Util.BACKUP_SERVER, Util.HOST_OS, virtual_project, rev_file, local_backup_dir))
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)):
-            # to workaround filename too long issue, we need to extract to tmp folder first
-            zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall('%s/%s' % (Util.WORKSPACE_DIR, rev_name))
-            shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
+            if Util.HOST_OS == Util.LINUX:
+                Util.chdir(local_backup_dir)
+                Util.execute('tar zxf %s.tar.gz' % rev_name)
+            elif Util.HOST_OS == Util.WINDOWS:
+                # to workaround filename too long issue, we need to extract to tmp folder first
+                zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall('%s/%s' % (Util.WORKSPACE_DIR, rev_name))
+                shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
 
         return rev_name, rev
 
