@@ -646,19 +646,19 @@ class Util:
                 browser_path = '/opt/google/chrome/chrome'
             elif target_os == Util.DARWIN:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                    browser_path = Util.PROJECT_CHROME_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
                 elif browser_name == 'chrome_canary':
                     browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
             elif target_os == Util.LINUX:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/chrome' % out_dir
+                    browser_path = Util.PROJECT_CHROME_DIR + '/%s/Release/chrome' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '/usr/bin/google-chrome-stable'
                 elif browser_name == 'chrome_canary':
                     browser_path = '/usr/bin/google-chrome-unstable'
             elif target_os == Util.WINDOWS:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_SRC_DIR + '/%s/Release/chrome.exe' % out_dir
+                    browser_path = Util.PROJECT_CHROME_DIR + '/%s/Release/chrome.exe' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
                 elif browser_name == 'chrome_beta':
@@ -1150,23 +1150,22 @@ class Util:
 
     PROJECT_ANGLE_DIR =  format_slash.__func__('%s/angle' % PROJECT_DIR)
     PROJECT_AQUARIUM_DIR =  format_slash.__func__('%s/aquarium' % PROJECT_DIR)
-    PROJECT_CHROME_DIR =  format_slash.__func__('%s/chromium' % PROJECT_DIR)
-    PROJECT_CHROME_SRC_DIR =  format_slash.__func__('%s/src' % PROJECT_CHROME_DIR)
-    PROJECT_CHROME_GPUTEST_DIR =  format_slash.__func__('%s/chromium-gputest' % PROJECT_DIR)
-    PROJECT_CHROME_GPUTEST_SRC_DIR =  format_slash.__func__('%s/src' % PROJECT_CHROME_GPUTEST_DIR)
+    PROJECT_CHROMIUM_DIR =  format_slash.__func__('%s/chromium/src' % PROJECT_DIR)
+    PROJECT_CHROMIUMGPUTEST_DIR =  format_slash.__func__('%s/chromiumgputest/src' % PROJECT_DIR)
     PROJECT_DAWN_DIR =  format_slash.__func__('%s/dawn' % PROJECT_DIR)
     PROJECT_DEPOT_TOOLS =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
     PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
     PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
     PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
     PROJECT_TFJS_DIR =  format_slash.__func__('%s/tfjs' % PROJECT_DIR)
+    PROJECT_TFJSWEBGPU_DIR =  format_slash.__func__('%s/tfjswebgpu' % PROJECT_DIR)
     PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
     PROJECT_V8_DIR =  format_slash.__func__('%s/v8' % PROJECT_DIR)
     PROJECT_WASM_DIR =  format_slash.__func__('%s/wasm' % PROJECT_DIR)
+    PROJECT_WEBBENCH_DIR =  format_slash.__func__('%s/webbench' % PROJECT_DIR)
     PROJECT_WEBGL_DIR =  format_slash.__func__('%s/WebGL' % PROJECT_DIR)
     PROJECT_WEBGPUCTS_DIR =  format_slash.__func__('%s/webgpucts' % PROJECT_DIR)
     PROJECT_WEBGPUSPEC_DIR =  format_slash.__func__('%s/webgpuspec' % PROJECT_DIR)
-    PROJECT_WEBBENCH_DIR =  format_slash.__func__('%s/webbench' % PROJECT_DIR)
     PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
     PROJECT_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % PROJECT_DIR)
     HOME_DIR = format_slash.__func__(expanduser("~"))
