@@ -646,19 +646,19 @@ class Util:
                 browser_path = '/opt/google/chrome/chrome'
             elif target_os == Util.DARWIN:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                    browser_path = Util.PROJECT_CHROMIUM_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
                 elif browser_name == 'chrome_canary':
                     browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
             elif target_os == Util.LINUX:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_DIR + '/%s/Release/chrome' % out_dir
+                    browser_path = Util.PROJECT_CHROMIUM_DIR + '/%s/Release/chrome' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '/usr/bin/google-chrome-stable'
                 elif browser_name == 'chrome_canary':
                     browser_path = '/usr/bin/google-chrome-unstable'
             elif target_os == Util.WINDOWS:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROME_DIR + '/%s/Release/chrome.exe' % out_dir
+                    browser_path = Util.PROJECT_CHROMIUM_DIR + '/%s/Release/chrome.exe' % out_dir
                 elif browser_name == 'chrome_stable':
                     browser_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
                 elif browser_name == 'chrome_beta':
