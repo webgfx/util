@@ -1230,7 +1230,7 @@ class ScriptRepo:
     IGNORE_FAIL_FILE = Util.format_slash('%s/FAIL' % IGNORE_DIR)
 
 class ChromiumRepo():
-    FAKE_REV = 0
+    FAKE_REV = 9999999
 
     COMMIT_STR = 'commit (.*)'
 
@@ -1306,7 +1306,7 @@ class ChromiumRepo():
         tmp_author = ''
         tmp_date = ''
         tmp_subject = ''
-        tmp_rev = 0
+        tmp_rev = self.FAKE_REV
         tmp_insertion = -1
         tmp_deletion = -1
         tmp_is_roll = False
@@ -1317,7 +1317,7 @@ class ChromiumRepo():
                 tmp_author = ''
                 tmp_date = ''
                 tmp_subject = ''
-                tmp_rev = 0
+                tmp_rev = self.FAKE_REV
                 tmp_insertion = -1
                 tmp_deletion = -1
                 tmp_is_roll = False
