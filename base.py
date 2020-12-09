@@ -1158,7 +1158,6 @@ class Util:
     PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
     PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
     PROJECT_TFJS_DIR =  format_slash.__func__('%s/tfjs' % PROJECT_DIR)
-    PROJECT_TFJSWEBGPU_DIR =  format_slash.__func__('%s/tfjswebgpu' % PROJECT_DIR)
     PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
     PROJECT_V8_DIR =  format_slash.__func__('%s/v8' % PROJECT_DIR)
     PROJECT_WASM_DIR =  format_slash.__func__('%s/wasm' % PROJECT_DIR)
