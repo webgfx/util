@@ -920,9 +920,10 @@ class Util:
     def set_mesa(dir, rev=0, type='iris'):
         if rev == 'system':
             #Util.ensure_pkg('mesa-vulkan-drivers')
+            rev_name = 'system'
             Util.info('Use system Mesa')
         else:
-            (rev_name, rev) = Util.get_backup_dir(dir, rev)
+            rev_name, rev = Util.get_backup_dir(dir, rev)
             mesa_dir = '%s/%s' % (dir, rev_name)
             Util.set_env('LD_LIBRARY_PATH', '%s/lib:%s/lib/x86_64-linux-gnu' % (mesa_dir, mesa_dir), verbose=True)
             Util.set_env('LIBGL_DRIVERS_PATH', '%s/lib/dri' % mesa_dir, verbose=True)
@@ -934,7 +935,7 @@ class Util:
                 Util.set_env('MESA_LOADER_DRIVER_OVERRIDE', 'i965')
 
             Util.info('Use mesa at %s' % mesa_dir)
-        return rev
+        return rev_name, rev
 
     @staticmethod
     def cal_backup_dir(rev=0):
