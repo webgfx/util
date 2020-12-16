@@ -98,7 +98,7 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
 
 class Util:
     @staticmethod
-    def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, log_file='', timeout=0):
+    def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, shell=True, log_file='', timeout=0):
         if show_duration:
             timer = Timer()
 
@@ -117,7 +117,7 @@ class Util:
         ret = 0
         out = ''
         if timeout or return_out:
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if timeout:
                 process_timer = threading.Timer(timeout, process.kill)
                 process_timer.start()
@@ -1063,7 +1063,7 @@ class Util:
     def get_server_backup(virtual_project, rev='latest'):
         cmd = 'ls -1t /workspace/backup/%s/%s/ | head -1' % (Util.HOST_OS, virtual_project)
         cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
-        _, out = Util.execute(cmd, return_out=True)
+        _, out = Util.execute(cmd, return_out=True, shell=False, exit_on_error=False)
         match = re.search('%s' % Util.BACKUP_PATTERN, out)
         rev = match.group(1)
         rev_name = match.group(0)
