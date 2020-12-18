@@ -1063,7 +1063,11 @@ class Util:
     def get_server_backup(virtual_project, rev='latest'):
         cmd = 'ls -1t /workspace/backup/%s/%s/ | head -1' % (Util.HOST_OS, virtual_project)
         cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
-        _, out = Util.execute(cmd, return_out=True, shell=False, exit_on_error=False)
+        if Util.HOST_OS == Util.LINUX:
+            shell = True
+        elif Util.HOST_OS == Util.WINDOWS:
+            shell = False
+        _, out = Util.execute(cmd, return_out=True, shell=shell, exit_on_error=False)
         match = re.search('%s' % Util.BACKUP_PATTERN, out)
         rev = match.group(1)
         rev_name = match.group(0)
