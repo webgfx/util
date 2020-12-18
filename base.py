@@ -758,7 +758,7 @@ class Util:
             if Util.need_sudo(path):
                 cmd = 'sudo ' + cmd
             _, out = Util.execute(cmd, show_cmd=False, return_out=True)
-            if re.search('symbolic link to', out):
+            if re.search('symbolic link to', str(out)):
                 return True
             else:
                 return False
@@ -784,7 +784,7 @@ class Util:
             if Util.need_sudo(path):
                 cmd = 'sudo ' + cmd
             _, out = Util.execute(cmd, show_cmd=False, return_out=True)
-            match = re.search('symbolic link to (.*)', out)
+            match = re.search('symbolic link to (.*)', str(out))
             link = match.group(1).strip()
             if Util.HOST_OS == Util.WINDOWS:
                 link = Util.use_drive(link)
@@ -802,13 +802,13 @@ class Util:
             return False
 
     # return True if there is a real update
-    # is_symlink: If true, just copy as a symbolic link
+    # is_sylk: If true, just copy as a symbolic link
     # dir_xxx means directory
     # name_xxx means file name
     # path_xxx means full path of file
     # need_bk means if it needs .bk file
     @staticmethod
-    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_symlink=False, need_bk=True):
+    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_sylk=False, need_bk=True):
         if not os.path.exists(dest_dir):
             # we do not warn here as it's a normal case
             # warning(dest_dir + ' does not exist')
@@ -833,11 +833,11 @@ class Util:
         need_bk_tmp = False
         has_update = False
 
-        if not Util.has_path(path_dest) or Util.has_link(path_dest) != is_symlink:
+        if not Util.has_path(path_dest) or Util.has_link(path_dest) != is_sylk:
             need_copy = True
             need_bk_tmp = True
             has_update = True
-        elif is_symlink:  # both are symbolic link
+        elif is_sylk:  # both are symbolic link
             if Util.get_link(path_dest) != path_src:
                 need_copy = True
                 need_bk_tmp = True
@@ -878,7 +878,7 @@ class Util:
                 cmd = 'sudo ' + cmd
             Util.execute(cmd, show_cmd=False, exit_on_error=False)
 
-            if is_symlink:
+            if is_sylk:
                 if Util.HOST_OS == Util.WINDOWS:
                     cmd = 'mklink "%s" "%s"' % (path_dest, path_src)
                 else:
