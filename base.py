@@ -1158,7 +1158,7 @@ class Util:
     PROJECT_CHROMIUM_DIR =  format_slash.__func__('%s/chromium/src' % PROJECT_DIR)
     PROJECT_CHROMIUMGPUTEST_DIR =  format_slash.__func__('%s/chromiumgputest/src' % PROJECT_DIR)
     PROJECT_DAWN_DIR =  format_slash.__func__('%s/dawn' % PROJECT_DIR)
-    PROJECT_DEPOT_TOOLS =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
+    PROJECT_DEPOT_TOOLS_DIR =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
     PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
     PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
     PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
