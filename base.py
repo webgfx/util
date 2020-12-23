@@ -1178,6 +1178,11 @@ class Util:
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
 
     if HOST_OS == WINDOWS:
+        WGET = format_slash.__func__('%s/util/tool/wget64.exe' % PROJECT_TOOLKIT_DIR)
+    else:
+        WGET = 'wget'
+
+    if HOST_OS == WINDOWS:
         APPDATA_DIR = format_slash.__func__(os.getenv('APPDATA'))
         PROGRAMFILES_DIR = format_slash.__func__(os.getenv('PROGRAMFILES'))
         PROGRAMFILESX86_DIR = format_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
