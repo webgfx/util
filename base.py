@@ -109,7 +109,11 @@ class Util:
         fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
         if not dryrun:
             Util.ensure_file(fail_file)
-            cmd = '%s && rm -f %s' % (cmd, fail_file)
+            if Util.HOST_OS == Util.WINDOWS:
+                remove_cmd = 'del'
+            else:
+                remove_cmd = 'rm'
+            cmd = '%s && %s %s' % (cmd, remove_cmd, fail_file)
 
         if log_file:
             cmd = '(%s) 2>&1 | tee -a %s' % (cmd, log_file)
