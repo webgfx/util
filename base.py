@@ -1138,6 +1138,7 @@ class Util:
             HOST_OS_RELEASE = platform.linux_distribution()[1]
             HOST_OS_DESCRIPTION = '%s %s' % (platform.linux_distribution()[0], platform.linux_distribution()[1])
     elif HOST_OS == WINDOWS:
+        # platform.version() will read 19041 instead of 19042 on Windows 10
         HOST_OS_RELEASE = subprocess.check_output(['cmd', '/c', 'ver']).split('\n')[1]
 
     HOST_NAME = socket.gethostname()
