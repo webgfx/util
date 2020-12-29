@@ -980,6 +980,9 @@ class Util:
             if type == 'gtest_angle':
                 for key, val in json_result['tests'].items():
                     _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
+            elif type == 'angle':
+                if json_result['errors']:
+                    pass_fail.append('%s in %s' % (json_result['errors'], result_file))
             elif type == 'gtest_chrome':
                 iters = json_result['per_iteration_data']
                 for iter in iters:
