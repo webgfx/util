@@ -1000,8 +1000,10 @@ class Util:
         driver = ''
         if Util.HOST_OS == Util.LINUX:
             #Util.ensure_pkg('mesa-utils')
-            _, name = Util.execute('lspci | grep VGA', return_out=True, log_file='')
-            name = name.split('controller:')[1].strip()
+            _, out = Util.execute('lspci -nn | grep VGA', return_out=True, log_file='')
+            match = re.search(': (.*) \[.*:(.*)\]', out)
+            name = match.group(1)
+            device_id = match.group(2)
             if 'NVIDIA' in name:
                 _, driver = Util.execute('nvidia-smi |grep Driver', return_out=True)
                 match = re.search('Driver Version: (\d+.\d+)', driver)
@@ -1021,9 +1023,9 @@ class Util:
                     elif match.group(1) == 'Name':
                         name = match.group(2)
                     elif match.group(1) == 'PNPDeviceID':
-                        vendor_id = re.search('DEV_(.{4})', match.group(2)).group(1)
+                        device_id = re.search('DEV_(.{4})', match.group(2)).group(1)
                         break
-        return name, driver, vendor_id
+        return name, driver, device_id
 
     @staticmethod
     def get_backup_dir(backup_dir, rev):
