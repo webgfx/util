@@ -1011,7 +1011,7 @@ class Util:
             if match:
                 driver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
-            cmd = 'wmic path win32_VideoController get Name,DriverVersion /value'
+            cmd = 'wmic path win32_VideoController get DriverVersion,Name,PNPDeviceID /value'
             lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\r\r\n')
             for line in lines:
                 match = re.match('(.*)=(.*)', line)
@@ -1020,8 +1020,10 @@ class Util:
                         driver = match.group(2)
                     elif match.group(1) == 'Name':
                         name = match.group(2)
+                    elif match.group(1) == 'PNPDeviceID':
+                        vendor_id = re.search('DEV_(.{4})', match.group(2)).group(1)
                         break
-        return name, driver
+        return name, driver, vendor_id
 
     @staticmethod
     def get_backup_dir(backup_dir, rev):
