@@ -1193,11 +1193,6 @@ class Util:
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
 
     if HOST_OS == WINDOWS:
-        WGET = format_slash.__func__('%s/util/tool/wget64.exe' % PROJECT_TOOLKIT_DIR)
-    else:
-        WGET = 'wget'
-
-    if HOST_OS == WINDOWS:
         APPDATA_DIR = format_slash.__func__(os.getenv('APPDATA'))
         PROGRAMFILES_DIR = format_slash.__func__(os.getenv('PROGRAMFILES'))
         PROGRAMFILESX86_DIR = format_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
@@ -1250,9 +1245,14 @@ class ScriptRepo:
     USER_DATA_DIR = Util.format_slash('%s/user-data-dir-%s' % (IGNORE_CHROMIUM_DIR, Util.USER_NAME))
     W3C_DIR = Util.format_slash('%s/w3c' % ROOT_DIR)
 
-    CHROMEDRIVER_FILE = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX))
     IGNORE_BOTO_FILE = Util.format_slash('%s/boto.conf' % IGNORE_DIR)
     IGNORE_FAIL_FILE = Util.format_slash('%s/FAIL' % IGNORE_DIR)
+
+    CHROMEDRIVER_FILE = Util.format_slash('%s/webdriver/%s/chromedriver%s' % (TOOL_DIR, Util.HOST_OS, Util.EXEC_SUFFIX))
+    if Util.HOST_OS == Util.WINDOWS:
+        WGET_FILE = Util.format_slash('%s/wget64.exe' % TOOL_DIR)
+    else:
+        WGET_FILE = 'wget'
 
 class ChromiumRepo():
     FAKE_REV = 9999999
