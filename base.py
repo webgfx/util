@@ -899,24 +899,30 @@ class Util:
 
     @staticmethod
     # committer date, instead of author date
-    def get_repo_date():
+    def get_working_dir_date():
         return Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', show_cmd=False, return_out=True)[1].rstrip('\n').rstrip('\r')
 
     @staticmethod
-    def get_repo_hash():
+    def get_working_dir_hash():
         cmd = 'git log --pretty=format:"%H" -1'
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.rstrip('\n').rstrip('\r')
 
     @staticmethod
-    def get_repo_rev():
+    def get_working_dir_rev():
         cmd = 'git rev-list --count HEAD'
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.rstrip('\n').rstrip('\r')
 
     @staticmethod
+    def get_repo_rev():
+        cmd = 'git rev-list --count HEAD origin/master'
+        _, out = Util.execute(cmd, show_cmd=False, return_out=True)
+        return out.rstrip('\n').rstrip('\r')
+
+    @staticmethod
     def get_repo_hashes():
-        cmd = 'git log --pretty=format:"%H" --reverse'
+        cmd = 'git log --pretty=format:"%H" --reverse origin/master'
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.split('\n')
 
@@ -944,8 +950,8 @@ class Util:
     @staticmethod
     def cal_backup_dir(rev=0):
         if not rev:
-            rev = Util.get_repo_rev()
-        return '%s-%s-%s' % (Util.get_repo_date(), rev, Util.get_repo_hash())
+            rev = Util.get_working_dir_rev()
+        return '%s-%s-%s' % (Util.get_working_dir_date(), rev, Util.get_working_dir_hash())
 
     @staticmethod
     def get_python_ver():
