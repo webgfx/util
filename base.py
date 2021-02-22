@@ -637,7 +637,7 @@ class Util:
             if target_os != Util.CHROMEOS:
                 options.extend(['--disk-cache-dir=/dev/null', '--disk-cache-size=1', '--user-data-dir=%s' % (ScriptRepo.USER_DATA_DIR)])
             if debug:
-                service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
+                service_args = ["--verbose", "--log-path=%s/chromedriver.log" % ScriptRepo.IGNORE_LOG_DIR]
             else:
                 service_args = []
         if browser_options:
@@ -666,9 +666,9 @@ class Util:
                 elif browser_name == 'chrome_stable':
                     browser_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
                 elif browser_name == 'chrome_beta':
-                    browser_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
+                    browser_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILES_DIR
                 elif browser_name == 'chrome_dev':
-                    browser_path = '%s/Google/Chrome Dev/Application/chrome.exe' % Util.PROGRAMFILESX86_DIR
+                    browser_path = '%s/Google/Chrome Dev/Application/chrome.exe' % Util.PROGRAMFILES_DIR
                 elif browser_name == 'chrome_canary':
                     browser_path = '%s/../Local/Google/Chrome SxS/Application/chrome.exe' % Util.APPDATA_DIR
                 elif browser_name == 'firefox_nightly':
@@ -703,7 +703,7 @@ class Util:
                     chrome_options.add_argument(option)
                 chrome_options.binary_location = browser_path
                 if debug:
-                    service_args = ["--verbose", "--log-path=%s/chromedriver.log" % dir_share_ignore_log]
+                    service_args = ["--verbose", "--log-path=%s/chromedriver.log" % SriptRepo.IGNORE_LOG_DIR]
                 else:
                     service_args = []
                 driver = webdriver.Chrome(executable_path=webdriver_file, chrome_options=chrome_options, service_args=service_args)
