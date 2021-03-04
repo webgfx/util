@@ -1067,9 +1067,9 @@ class Util:
         return new_cmd
 
     @staticmethod
-    def check_server_backup(server, virtual_project, rev_file):
-        cmd = 'ls %s/%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project, rev_file)
-        cmd = Util.remotify_cmd(server, cmd)
+    def check_server_backup(virtual_project, rev_file):
+        cmd = 'ls %s/%s/%s/%s' % (Util.LINUX_BACKUP_DIR, Util.HOST_OS, virtual_project, rev_file)
+        cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
         ret, _ = Util.execute(cmd, exit_on_error=False)
         if ret:
             return False
@@ -1164,13 +1164,14 @@ class Util:
         USER_NAME = os.getenv('USER')
     CPU_COUNT = multiprocessing.cpu_count()
 
+    LINUX_WORKSPACE_DIR = '/workspace'
     if HOST_OS == WINDOWS:
         WORKSPACE_DIR = 'd:/workspace'
     else:
-        WORKSPACE_DIR = '/workspace'
+        WORKSPACE_DIR = LINUX_WORKSPACE_DIR
 
-    WORKSPACE_DIR = format_slash.__func__(WORKSPACE_DIR)
     BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
+    LINUX_BACKUP_DIR = '%s/backup' % LINUX_WORKSPACE_DIR
     PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
     SERVER_DIR = format_slash.__func__('%s/server' % WORKSPACE_DIR)
 
