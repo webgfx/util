@@ -1042,7 +1042,7 @@ class Util:
             for file in files:
                 match = re.match('%s$' % Util.BACKUP_PATTERN, file)
                 if match:
-                    tmp_rev = int(match.group(1))
+                    tmp_rev = int(match.group(2))
                     if tmp_rev > rev:
                         rev_name = file
                         rev = tmp_rev
@@ -1086,8 +1086,9 @@ class Util:
             shell = False
         _, out = Util.execute(cmd, return_out=True, shell=shell, exit_on_error=False)
         match = re.search('%s' % Util.BACKUP_PATTERN, out)
-        rev = match.group(1)
         rev_name = match.group(0)
+        date = match.group(1)
+        rev = match.group(2)
 
         if Util.HOST_OS == Util.LINUX:
             rev_file = '%s.tar.gz' % rev_name
@@ -1107,7 +1108,7 @@ class Util:
                 zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall('%s/%s' % (Util.WORKSPACE_DIR, rev_name))
                 shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
 
-        return rev_name, rev
+        return rev_name, date, rev
 
     @staticmethod
     def get_local_backup(virtual_project, rev='latest'):
@@ -1116,9 +1117,10 @@ class Util:
             match = re.match('%s$' % Util.BACKUP_PATTERN, file_name)
             if match:
                 rev_name = file_name
-                rev = match.group(1)
+                date = match.group(1)
+                rev = match.group(2)
                 break
-        return rev_name, rev
+        return rev_name, date, rev
 
     # constants
     PYTHON_MAJOR = sys.version_info.major
@@ -1131,7 +1133,7 @@ class Util:
     CHROMEOS = 'chromeos'
     ANDROID = 'android'
     MAX_REV = 9999999
-    BACKUP_PATTERN = r'\d{8}-(\d*)-[a-z0-9]{40}' # <date>-<rev>-<hash>
+    BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}' # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
     HOST_OS = platform.system().lower()
     if HOST_OS == LINUX:
@@ -1279,6 +1281,11 @@ class ChromiumRepo():
     def __init__(self, root_dir):
         self.root_dir = root_dir
         self.info = [self.FAKE_REV, self.FAKE_REV, {}]
+
+    def get_working_dir_date():
+        Util.chdir(self.root_dir)
+        cmd = 'git log -1 --date=format:"%Y%m%d" --format="%cd"'
+        return Util.execute(cmd, show_cmd=False, return_out=True)[1].rstrip('\n').rstrip('\r')
 
     def get_working_dir_rev(self):
         Util.chdir(self.root_dir)
