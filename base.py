@@ -1106,8 +1106,10 @@ class Util:
             elif Util.HOST_OS == Util.WINDOWS:
                 # to workaround filename too long issue, we need to extract to tmp folder first
                 zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall('%s/%s' % (Util.WORKSPACE_DIR, rev_name))
-                shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
-
+                try:
+                    shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
+                except Exception as e:
+                    Util.warning('shutil.move: %s' % e)
         return rev_name, date, rev
 
     @staticmethod
