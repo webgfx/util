@@ -1101,7 +1101,7 @@ class Util:
         elif Util.HOST_OS == Util.WINDOWS:
             rev_file = '%s.zip' % rev_name
 
-        local_backup_dir = '%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
+        local_backup_dir = '%s/%s' % (Util.BACKUP_DIR, virtual_project)
         Util.ensure_dir(local_backup_dir)
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists('%s/%s' % (local_backup_dir, rev_file)):
             Util.execute('scp wp@%s:/workspace/backup/%s/%s/%s %s' % (Util.BACKUP_SERVER, Util.HOST_OS, virtual_project, rev_file, local_backup_dir))
@@ -1120,7 +1120,7 @@ class Util:
 
     @staticmethod
     def get_local_backup(virtual_project, rev='latest'):
-        local_backup_dir = '%s/%s/%s' % (Util.BACKUP_DIR, Util.HOST_OS, virtual_project)
+        local_backup_dir = '%s/%s' % (Util.BACKUP_DIR, virtual_project)
         for file_name in sorted(os.listdir(local_backup_dir), reverse=True):
             match = re.match('%s$' % Util.BACKUP_PATTERN, file_name)
             if match:
