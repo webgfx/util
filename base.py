@@ -417,10 +417,11 @@ class Util:
 
     @staticmethod
     def set_proxy(address, port):
-        http_proxy = 'http://%s:%s' % (address, port)
-        https_proxy = 'https://%s:%s' % (address, port)
+        http_proxy = '%s:%s' % (address, port)
+        https_proxy = '%s:%s' % (address, port)
         Util.set_env('http_proxy', http_proxy)
         Util.set_env('https_proxy', https_proxy)
+        Util.set_env('no_proxy', '127.0.0.1')
 
     @staticmethod
     def clear_proxy():
@@ -1004,6 +1005,15 @@ class Util:
                             pass_pass.append(name)
                         elif status == 'FAILURE':
                             pass_fail.append(name)
+            elif type == 'webgpu_blink_web_tests':
+                regression_count = json_result['num_regressions']
+                flaky_count = json_result['num_flaky']
+                pass_fail_count = regression_count + flaky_count
+                pass_pass_count = json_result['num_passes']
+                pass_pass = [0] * pass_pass_count
+                if pass_fail_count:
+                    pass_fail.append('%s in %s' % (pass_fail_count, result_file))
+
         return pass_fail, fail_pass, fail_fail, pass_pass
 
     @staticmethod
