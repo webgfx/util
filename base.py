@@ -1205,6 +1205,7 @@ class Util:
     PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
     PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
     PROJECT_TFJS_DIR =  format_slash.__func__('%s/tfjs' % PROJECT_DIR)
+    PROJECT_WEBTEST_DIR =  format_slash.__func__('%s/webtest' % PROJECT_DIR)
     PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
     PROJECT_V8_DIR =  format_slash.__func__('%s/v8' % PROJECT_DIR)
     PROJECT_WASM_DIR =  format_slash.__func__('%s/wasm' % PROJECT_DIR)
@@ -1215,6 +1216,7 @@ class Util:
     PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
     PROJECT_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % PROJECT_DIR)
     HOME_DIR = format_slash.__func__(expanduser("~"))
+    BACKUP_SERVER_TFJS_DATA_DIR = "/workspace/project/work/tfjs/data/"
 
     GNP_SCRIPT =  format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
