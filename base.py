@@ -1212,6 +1212,7 @@ class Util:
     PROJECT_WEBGL_DIR =  format_slash.__func__('%s/WebGL' % PROJECT_DIR)
     PROJECT_WEBGPUCTS_DIR =  format_slash.__func__('%s/webgpucts' % PROJECT_DIR)
     PROJECT_WEBGPUSPEC_DIR =  format_slash.__func__('%s/webgpuspec' % PROJECT_DIR)
+    PROJECT_WEBTEST_DIR =  format_slash.__func__('%s/webtest' % PROJECT_DIR)
     PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
     PROJECT_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % PROJECT_DIR)
     HOME_DIR = format_slash.__func__(expanduser("~"))
