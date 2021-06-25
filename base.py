@@ -121,7 +121,7 @@ class Util:
         ret = 0
         out = ''
         if timeout or return_out:
-            process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             if timeout:
                 process_timer = threading.Timer(timeout, process.kill)
                 process_timer.start()
@@ -979,40 +979,43 @@ class Util:
         fail_fail = []
         pass_pass = []
 
-        try:
-            json_result = json.load(open(result_file))
-        except Exception:
-            pass_fail.append('All in %s' % result_file)
+        if type == 'gtest_chrome':
+            line = open(result_file).readlines()[1]
+            match = re.search('tests="(\d+)" failures="(\d+)" disabled="(\d+)" errors="(\d+)"', open(result_file).readlines()[1])
+            errors_count = int(match.group(4))
+            failures_count = int(match.group(2))
+            pass_fail_count = errors_count + failures_count
+            total_count = int(match.group(1))
+            pass_pass_count = total_count - pass_fail_count
+            pass_pass = [0] * pass_pass_count
+            if pass_fail_count:
+                pass_fail.append('%s in %s' % (pass_fail_count, result_file))
         else:
-            if type == 'gtest_angle':
-                for key, val in json_result['tests'].items():
-                    _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
-            elif type == 'angle':
-                errors_count = json_result['errors']
-                failures_count = json_result['failures']
-                pass_fail_count = errors_count + failures_count
-                total_count = json_result['tests']
-                pass_pass_count = total_count - pass_fail_count
-                pass_pass = [0] * pass_pass_count
-                if pass_fail_count:
-                    pass_fail.append('%s in %s' % (pass_fail_count, result_file))
-            elif type == 'gtest_chrome':
-                iters = json_result['per_iteration_data']
-                for iter in iters:
-                    for name in iter:
-                        status = iter[name][0]['status']
-                        if status == 'SUCCESS':
-                            pass_pass.append(name)
-                        elif status == 'FAILURE':
-                            pass_fail.append(name)
-            elif type == 'webgpu_blink_web_tests':
-                regression_count = json_result['num_regressions']
-                flaky_count = json_result['num_flaky']
-                pass_fail_count = regression_count + flaky_count
-                pass_pass_count = json_result['num_passes']
-                pass_pass = [0] * pass_pass_count
-                if pass_fail_count:
-                    pass_fail.append('%s in %s' % (pass_fail_count, result_file))
+            try:
+                json_result = json.load(open(result_file))
+            except Exception as e:
+                pass_fail.append('All in %s' % result_file)
+            else:
+                if type == 'gtest_angle':
+                    for key, val in json_result['tests'].items():
+                        _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
+                elif type in ['angle']:
+                    errors_count = json_result['errors']
+                    failures_count = json_result['failures']
+                    pass_fail_count = errors_count + failures_count
+                    total_count = json_result['tests']
+                    pass_pass_count = total_count - pass_fail_count
+                    pass_pass = [0] * pass_pass_count
+                    if pass_fail_count:
+                        pass_fail.append('%s in %s' % (pass_fail_count, result_file))
+                elif type == 'webgpu_blink_web_tests':
+                    regression_count = json_result['num_regressions']
+                    flaky_count = json_result['num_flaky']
+                    pass_fail_count = regression_count + flaky_count
+                    pass_pass_count = json_result['num_passes']
+                    pass_pass = [0] * pass_pass_count
+                    if pass_fail_count:
+                        pass_fail.append('%s in %s' % (pass_fail_count, result_file))
 
         return pass_fail, fail_pass, fail_fail, pass_pass
 
@@ -1036,9 +1039,9 @@ class Util:
                 driver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
             cmd = 'wmic path win32_VideoController get DriverVersion,Name,PNPDeviceID /value'
-            lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\r\r\n')
+            lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n\n')
             for line in lines:
-                match = re.match('(.*)=(.*)', line)
+                match = re.match(r'(.*)=(.*)', line)
                 if match:
                     if match.group(1) == 'DriverVersion':
                         driver = match.group(2)
@@ -1141,6 +1144,7 @@ class Util:
         return rev_name, date, rev
 
     # constants
+    PYTHON = 'python3'
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
     BACKUP_SERVER = 'wp-27.sh.intel.com'
@@ -1470,7 +1474,7 @@ class Program(object):
 
         parser.epilog = '''
 examples:
-python %(prog)s --root-dir --target-arch''' + parser.epilog
+{0} {1} --root-dir --target-arch'''.format(Util.PYTHON, parser.prog) + parser.epilog
         parser.formatter_class = argparse.RawTextHelpFormatter
         args = parser.parse_args()
         self.args = args
