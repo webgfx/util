@@ -603,8 +603,8 @@ class Util:
             tmp_rev = int(match.group(1))
 
         # >= r291561, use below format
-        # example: Cr-Commit-Position: refs/heads/master@{#349370}
-        match = re.match('Cr-Commit-Position: refs/heads/master@{#(.*)}', strip_line)
+        # example: Cr-Commit-Position: refs/heads/main@{#349370}
+        match = re.match('Cr-Commit-Position: refs/heads/main@{#(.*)}', strip_line)
         if match:
             tmp_rev = int(match.group(1))
 
@@ -916,14 +916,14 @@ class Util:
         return out.rstrip('\n').rstrip('\r')
 
     @staticmethod
-    def get_repo_rev():
-        cmd = 'git rev-list --count HEAD origin/master'
+    def get_repo_rev(branch='master'):
+        cmd = 'git rev-list --count HEAD origin/%s' % branch
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.rstrip('\n').rstrip('\r')
 
     @staticmethod
-    def get_repo_hashes():
-        cmd = 'git log --pretty=format:"%H" --reverse origin/master'
+    def get_repo_hashes(branch='master'):
+        cmd = 'git log --pretty=format:"%H" --reverse origin/%s' % branch
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.split('\n')
 
@@ -1316,9 +1316,9 @@ class ChromiumRepo():
         cmd = 'git log --shortstat -1'
         return self._get_head_rev(cmd)
 
-    def get_repo_rev(self):
+    def get_repo_rev(self, branch='master'):
         Util.chdir(self.root_dir)
-        cmd = 'git log --shortstat -1 origin/master'
+        cmd = 'git log --shortstat -1 origin/%s' % branch
         return self._get_head_rev(cmd)
 
     def get_hash_from_rev(self, rev):
@@ -1352,12 +1352,12 @@ class ChromiumRepo():
                 self._get_info(info_max_rev + 1, max_rev)
                 info[self.INFO_INDEX_MAX_REV] = max_rev
 
-    def _get_info(self, min_rev, max_rev):
+    def _get_info(self, min_rev, max_rev, branch='master'):
         info = self.info
         head_rev = self.get_repo_rev()
         if max_rev > head_rev:
             Util.error('Revision %s is not ready' % max_rev)
-        cmd = 'git log --shortstat origin/master~%s..origin/master~%s ' % (head_rev - min_rev + 1, head_rev - max_rev)
+        cmd = 'git log --shortstat origin/%s~%s..origin/%s~%s ' % (branch, head_rev - min_rev + 1, branch, head_rev - max_rev)
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         lines = out.split('\n')
 
@@ -1435,8 +1435,8 @@ class ChromiumRepo():
             tmp_rev = int(match.group(1))
 
         # >= r291561, use below format
-        # example: Cr-Commit-Position: refs/heads/master@{#349370}
-        match = re.match('Cr-Commit-Position: refs/heads/master@{#(.*)}', strip_line)
+        # example: Cr-Commit-Position: refs/heads/main@{#349370}
+        match = re.match('Cr-Commit-Position: refs/heads/main@{#(.*)}', strip_line)
         if match:
             tmp_rev = int(match.group(1))
 
