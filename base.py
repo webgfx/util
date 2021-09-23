@@ -905,7 +905,7 @@ class Util:
 
     @staticmethod
     def get_working_dir_hash():
-        cmd = 'git log --pretty=format:"%H" -1'
+        cmd = 'git rev-list --reverse HEAD -1'
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.rstrip('\n').rstrip('\r')
 
@@ -923,7 +923,7 @@ class Util:
 
     @staticmethod
     def get_repo_hashes(branch='master'):
-        cmd = 'git log --pretty=format:"%H" --reverse origin/%s' % branch
+        cmd = 'git rev-list --reverse HEAD origin/%s' % branch
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         return out.split('\n')
 
