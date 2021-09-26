@@ -499,7 +499,7 @@ class Util:
         return list(set(a).difference(set(b)))
 
     @staticmethod
-    def send_email(sender, to, subject, content, type='plain'):
+    def send_email(subject, content, sender='webgraphics@intel.com', to='yang.gu@intel.com', type='plain'):
         if isinstance(to, list):
             to = ','.join(to)
 
