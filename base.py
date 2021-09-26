@@ -514,7 +514,7 @@ class Util:
         msg.attach(MIMEText(content, type))
 
         try:
-            smtp = smtplib.SMTP(Util.SMTP_SERVER)
+            smtp = smtplib.SMTP('ecsmtp.sh.intel.com')
             smtp.sendmail(sender, to_list, msg.as_string())
             Util.info('Email was sent successfully')
         except Exception as e:
@@ -1148,7 +1148,6 @@ class Util:
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
     BACKUP_SERVER = 'wp-27.sh.intel.com'
-    SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'windows'
     LINUX = 'linux'
     DARWIN = 'darwin'
