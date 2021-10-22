@@ -498,6 +498,7 @@ class Util:
     def diff_list(a, b):
         return list(set(a).difference(set(b)))
 
+    # To use LOCAL_SMTP_SERVER, you need to add machine name into wp-27:/etc/postfix/main.cf
     @staticmethod
     def send_email(subject, content='', sender='', to='', type=''):
         if not sender:
@@ -521,7 +522,11 @@ class Util:
         msg.attach(MIMEText(content, type))
 
         try:
-            smtp = smtplib.SMTP('ecsmtp.sh.intel.com')
+            if False:
+                smtp_server = Util.LOCAL_SMTP_SERVER
+            else:
+                smtp_server = Util.INTEL_SMTP_SERVER
+            smtp = smtplib.SMTP(smtp_server)
             smtp.sendmail(sender, to_list, msg.as_string())
             Util.info('Email was sent successfully')
         except Exception as e:
@@ -1155,6 +1160,8 @@ class Util:
     PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
     BACKUP_SERVER = 'wp-27.sh.intel.com'
+    INTEL_SMTP_SERVER = 'ecsmtp.sh.intel.com'
+    LOCAL_SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'windows'
     LINUX = 'linux'
     DARWIN = 'darwin'
