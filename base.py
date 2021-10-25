@@ -46,6 +46,7 @@ try:
     from selenium import webdriver
     from selenium.common.exceptions import TimeoutException
     from selenium.webdriver.common.action_chains import ActionChains
+    from selenium.webdriver.common.by import By
     from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.support import expected_conditions
     from selenium.webdriver.support.select import Select
@@ -677,7 +678,7 @@ class Util:
                 if browser_name == 'chrome':
                     browser_path = Util.PROJECT_CHROMIUM_DIR + '/%s/Release/chrome.exe' % out_dir
                 elif browser_name == 'chrome_stable':
-                    browser_path = '%s/../Local/Google/Chrome/Application/chrome.exe' % Util.APPDATA_DIR
+                    browser_path = '%s/Google/Chrome/Application/chrome.exe' % Util.PROGRAMFILES_DIR
                 elif browser_name == 'chrome_beta':
                     browser_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILES_DIR
                 elif browser_name == 'chrome_dev':
