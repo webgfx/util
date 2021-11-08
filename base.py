@@ -973,15 +973,18 @@ class Util:
 
     @staticmethod
     def get_test_result(result_file, type):
+        def _is_pass(val):
+            return val == 'PASS'
+
         def _parse_result(key, val, path, pass_fail, fail_pass, fail_fail, pass_pass):
             if 'expected' in val:
-                if val['expected'] == 'FAIL' and val['actual'].startswith('FAIL'):
+                if not _is_pass(val['expected']) and not _is_pass(val['actual']):
                     fail_fail.append(path)
-                elif val['expected'] == 'FAIL' and val['actual'] == 'PASS':
+                elif not _is_pass(val['expected']) and _is_pass(val['actual']):
                     fail_pass.append(path)
-                elif val['expected'] == 'PASS' and val['actual'].startswith('FAIL'):
+                elif _is_pass(val['expected']) and not _is_pass(val['actual']):
                     pass_fail.append(path)
-                elif val['expected'] == 'PASS' and val['actual'] == 'PASS':
+                elif _is_pass(val['expected']) and _is_pass(val['actual']):
                     pass_pass.append(path)
             else:
                 for new_key, new_val in val.items():
@@ -992,43 +995,31 @@ class Util:
         fail_fail = []
         pass_pass = []
 
-        if type == 'gtest_chrome':
-            line = open(result_file).readlines()[1]
-            match = re.search('tests="(\d+)" failures="(\d+)" disabled="(\d+)" errors="(\d+)"', open(result_file).readlines()[1])
-            errors_count = int(match.group(4))
-            failures_count = int(match.group(2))
-            pass_fail_count = errors_count + failures_count
-            total_count = int(match.group(1))
-            pass_pass_count = total_count - pass_fail_count
-            pass_pass = [0] * pass_pass_count
-            if pass_fail_count:
-                pass_fail.append('%s in %s' % (pass_fail_count, result_file))
+        try:
+            json_result = json.load(open(result_file))
+        except Exception as e:
+            pass_fail.append('All in %s' % result_file)
         else:
-            try:
-                json_result = json.load(open(result_file))
-            except Exception as e:
-                pass_fail.append('All in %s' % result_file)
-            else:
-                if type == 'gtest_angle':
-                    for key, val in json_result['tests'].items():
-                        _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
-                elif type in ['angle']:
-                    errors_count = json_result['errors']
-                    failures_count = json_result['failures']
-                    pass_fail_count = errors_count + failures_count
-                    total_count = json_result['tests']
-                    pass_pass_count = total_count - pass_fail_count
-                    pass_pass = [0] * pass_pass_count
-                    if pass_fail_count:
-                        pass_fail.append('%s in %s' % (pass_fail_count, result_file))
-                elif type == 'webgpu_blink_web_tests':
-                    regression_count = json_result['num_regressions']
-                    flaky_count = json_result['num_flaky']
-                    pass_fail_count = regression_count + flaky_count
-                    pass_pass_count = json_result['num_passes']
-                    pass_pass = [0] * pass_pass_count
-                    if pass_fail_count:
-                        pass_fail.append('%s in %s' % (pass_fail_count, result_file))
+            if type in ['gtest_angle', 'webgpu_blink_web_tests']:
+                for key, val in json_result['tests'].items():
+                    _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
+
+            elif type == 'gtest_chrome':
+                for key, val in json_result['per_iteration_data'][0].items():
+                    if val[0]['status'] == 'SUCCESS':
+                        pass_pass.append(key)
+                    elif val[0]['status'] == 'FAILURE':
+                        pass_fail.append(key)
+
+            elif type == 'angle':
+                errors_count = json_result['errors']
+                failures_count = json_result['failures']
+                pass_fail_count = errors_count + failures_count
+                total_count = json_result['tests']
+                pass_pass_count = total_count - pass_fail_count
+                pass_pass = [0] * pass_pass_count
+                if pass_fail_count:
+                    pass_fail.append('%s in %s' % (pass_fail_count, result_file))
 
         return pass_fail, fail_pass, fail_fail, pass_pass
 
