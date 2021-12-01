@@ -1049,9 +1049,9 @@ class Util:
                 if match:
                     if match.group(1) == 'DriverVersion':
                         driver = match.group(2)
-                    elif match.group(1) == 'Name':
+                    elif match.group(1) == 'Name' and not match.group(2) == 'Microsoft Remote Display Adapter':
                         name = match.group(2)
-                    elif match.group(1) == 'PNPDeviceID':
+                    elif match.group(1) == 'PNPDeviceID' and not match.group(2)[0:3] == 'SWD':
                         device_id = re.search('DEV_(.{4})', match.group(2)).group(1)
                         break
         return name, driver, device_id
