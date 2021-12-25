@@ -1326,16 +1326,13 @@ class ChromiumRepo():
         cmd = 'git log --shortstat -1 origin/%s' % branch
         return self._get_head_rev(cmd)
 
-    def get_hash_from_rev(self, rev):
+    def get_hash_from_rev(self, rev, branch='master'):
         if rev not in self.info[self.INFO_INDEX_REV_INFO]:
-            self.get_info(rev)
+            self.get_info(rev, rev, branch)
         return self.info[self.INFO_INDEX_REV_INFO][rev][self.REV_INFO_INDEX_HASH]
 
     # get info of [min_rev, max_rev]
-    def get_info(self, min_rev, max_rev=FAKE_REV):
-        if max_rev == self.FAKE_REV:
-            max_rev = min_rev
-
+    def get_info(self, min_rev, max_rev, branch='master'):
         if min_rev > max_rev:
             return
 
@@ -1346,20 +1343,20 @@ class ChromiumRepo():
             return
 
         if info[self.INFO_INDEX_MIN_REV] == self.FAKE_REV:
-            self._get_info(min_rev, max_rev)
+            self._get_info(min_rev, max_rev, branch)
             info[self.INFO_INDEX_MIN_REV] = min_rev
             info[self.INFO_INDEX_MAX_REV] = max_rev
         else:
             if min_rev < info_min_rev:
-                self._get_info(min_rev, info_min_rev - 1)
+                self._get_info(min_rev, info_min_rev - 1, branch)
                 info[self.INFO_INDEX_MIN_REV] = min_rev
             if max_rev > info_max_rev:
-                self._get_info(info_max_rev + 1, max_rev)
+                self._get_info(info_max_rev + 1, max_rev, branch)
                 info[self.INFO_INDEX_MAX_REV] = max_rev
 
-    def _get_info(self, min_rev, max_rev, branch='master'):
+    def _get_info(self, min_rev, max_rev, branch):
         info = self.info
-        head_rev = self.get_repo_rev()
+        head_rev = self.get_repo_rev(branch)
         if max_rev > head_rev:
             Util.error('Revision %s is not ready' % max_rev)
         cmd = 'git log --shortstat origin/%s~%s..origin/%s~%s ' % (branch, head_rev - min_rev + 1, branch, head_rev - max_rev)
