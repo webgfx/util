@@ -1021,6 +1021,16 @@ class Util:
                 if pass_fail_count:
                     pass_fail.append('%s in %s' % (pass_fail_count, result_file))
 
+            elif type == 'dawn':
+                for test_suite in json_result['testsuites']:
+                    suite_name = test_suite['name']
+                    for test in test_suite['testsuite']:
+                        test_name = '%s.%s' % (suite_name, test['name'])
+                        if 'failures' in test:
+                            pass_fail.append(test_name)
+                        else:
+                            pass_pass.append(test_name)
+
         return pass_fail, fail_pass, fail_fail, pass_pass
 
     @staticmethod
