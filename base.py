@@ -717,7 +717,7 @@ class Util:
                     chrome_options.add_argument(option)
                 chrome_options.binary_location = browser_path
                 if debug:
-                    service_args = ["--verbose", "--log-path=%s/chromedriver.log" % SriptRepo.IGNORE_LOG_DIR]
+                    service_args = ["--verbose", "--log-path=%s/chromedriver.log" % ScriptRepo.IGNORE_LOG_DIR]
                 else:
                     service_args = []
                 driver = webdriver.Chrome(executable_path=webdriver_file, chrome_options=chrome_options, service_args=service_args)
