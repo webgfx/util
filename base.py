@@ -1331,18 +1331,18 @@ class ChromiumRepo():
         cmd = 'git log --shortstat -1'
         return self._get_head_rev(cmd)
 
-    def get_repo_rev(self, branch='master'):
+    def get_repo_rev(self, branch='main'):
         Util.chdir(self.root_dir)
         cmd = 'git log --shortstat -1 origin/%s' % branch
         return self._get_head_rev(cmd)
 
-    def get_hash_from_rev(self, rev, branch='master'):
+    def get_hash_from_rev(self, rev, branch='main'):
         if rev not in self.info[self.INFO_INDEX_REV_INFO]:
             self.get_info(rev, rev, branch)
         return self.info[self.INFO_INDEX_REV_INFO][rev][self.REV_INFO_INDEX_HASH]
 
     # get info of [min_rev, max_rev]
-    def get_info(self, min_rev, max_rev, branch='master'):
+    def get_info(self, min_rev, max_rev, branch='main'):
         if min_rev > max_rev:
             return
 
@@ -1448,9 +1448,9 @@ class ChromiumRepo():
 
         # >= r291561, use below format
         # example: Cr-Commit-Position: refs/heads/main@{#349370}
-        match = re.match('Cr-Commit-Position: refs/heads/main@{#(.*)}', strip_line)
+        match = re.match('Cr-Commit-Position: refs/heads/(main|master)@{#(.*)}', strip_line)
         if match:
-            tmp_rev = int(match.group(1))
+            tmp_rev = int(match.group(2))
 
         if re.match(r'(\d+) files? changed', strip_line):
             match = re.search(r'(\d+) insertion(s)*\(\+\)', strip_line)
