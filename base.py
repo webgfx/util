@@ -1321,7 +1321,7 @@ class ChromiumRepo():
         self.root_dir = root_dir
         self.info = [self.FAKE_REV, self.FAKE_REV, {}]
 
-    def get_working_dir_date():
+    def get_working_dir_date(self):
         Util.chdir(self.root_dir)
         cmd = 'git log -1 --date=format:"%Y%m%d" --format="%cd"'
         return Util.execute(cmd, show_cmd=False, return_out=True)[1].rstrip('\n').rstrip('\r')
