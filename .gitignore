@@ -1,3 +1,4 @@
 *.pyc
 ignore/
+tool/webdriver/windows/chromedriver.exe
 __pycache__/
