@@ -107,7 +107,7 @@ class Util:
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        fail_file = Util.format_slash(ScriptRepo.IGNORE_FAIL_FILE)
+        fail_file = Util.format_slash('%s-%s' % (ScriptRepo.IGNORE_FAIL_FILE, Util.get_datetime()))
         if not dryrun:
             Util.ensure_file(fail_file)
             if Util.HOST_OS == Util.WINDOWS:
@@ -259,10 +259,8 @@ class Util:
 
     @staticmethod
     def ensure_nofile(file_path):
-        if not os.path.exists(file_path):
-            return
-
-        os.remove(file_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     @staticmethod
     def ensure_symlink(src, dst):
