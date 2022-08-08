@@ -194,7 +194,7 @@ class Util:
         m = inspect.stack()[1][3].upper()
         if show_strace:
             m += ', File "%s", Line: %s, Function %s' % inspect.stack()[2][1:4]
-        m = '[' + m + '] ' + msg
+        m = '[%s] %s' % (m, msg)
         print(m)
 
     @staticmethod
