@@ -1092,7 +1092,12 @@ class Util:
 
     @staticmethod
     def remotify_cmd(server, cmd, extra_arg=''):
-        new_cmd = 'ssh wp@%s' % server
+        new_cmd = 'ssh'
+        # Disable SSH X11 forwarding on Windows to workaround SSH hangs sometimes when executing command remotely.
+        # Issue: https://github.com/PowerShell/Win32-OpenSSH/issues/1334
+        if Util.HOST_OS == Util.WINDOWS:
+            new_cmd += ' -x'
+        new_cmd += ' wp@%s' % server
         if extra_arg:
             new_cmd += ' %s' % extra_arg
         new_cmd += ' "%s"' % cmd
