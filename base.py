@@ -595,6 +595,9 @@ class Util:
                 else:
                     tmp_author = line.rstrip('\n').replace('Author:', '').strip()
                     Util.warning('The author %s is in abnormal format' % tmp_author)
+            if tmp_author == '84498356+jzm-intel@users.noreply.github.com':
+                Util.info('The author %s is converted to zhaoming.jiang@intel.com' % tmp_author)
+                tmp_author = 'zhaoming.jiang@intel.com'
 
         # date & subject
         match = re.match('Date:(.*)', line)
