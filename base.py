@@ -1108,7 +1108,7 @@ class Util:
 
     @staticmethod
     def check_server_backup(relative_path, rev_file):
-        cmd = 'ls %s/%s/%s/%s' % (Util.LINUX_BACKUP_DIR, Util.HOST_OS, relative_path, rev_file)
+        cmd = 'ls %s/%s/%s/%s' % (Util.LINUX_BACKUP_DIR, Util.BACKUP_OS, relative_path, rev_file)
         cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
         ret, _ = Util.execute(cmd, exit_on_error=False)
         if ret:
@@ -1118,7 +1118,7 @@ class Util:
 
     @staticmethod
     def get_server_backup(relative_path, rev='latest'):
-        cmd = 'ls -1t /workspace/backup/%s/%s/ | head -1' % (Util.HOST_OS, relative_path)
+        cmd = 'ls -1t /workspace/backup/%s/%s/ | head -1' % (Util.BACKUP_OS, relative_path)
         cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
         if Util.HOST_OS == Util.LINUX:
             shell = True
@@ -1138,7 +1138,7 @@ class Util:
         local_backup_dir = '%s/%s' % (Util.BACKUP_DIR, relative_path)
         Util.ensure_dir(local_backup_dir)
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists('%s/%s' % (local_backup_dir, rev_file)):
-            Util.execute('scp wp@%s:/workspace/backup/%s/%s/%s %s' % (Util.BACKUP_SERVER, Util.HOST_OS, relative_path, rev_file, local_backup_dir))
+            Util.execute('scp wp@%s:/workspace/backup/%s/%s/%s %s' % (Util.BACKUP_SERVER, Util.BACKUP_OS, relative_path, rev_file, local_backup_dir))
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)):
             if Util.HOST_OS == Util.LINUX:
                 Util.chdir(local_backup_dir)
@@ -1218,6 +1218,10 @@ class Util:
 
     BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
     LINUX_BACKUP_DIR = '%s/backup' % LINUX_WORKSPACE_DIR
+    BACKUP_OS = HOST_OS
+    # Depends on the backup driectory name for each platforms under BACKUP_DIR/
+    if HOST_OS == WINDOWS:
+        BACKUP_OS = 'win32'
     PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
     SERVER_DIR = format_slash.__func__('%s/server' % WORKSPACE_DIR)
 
