@@ -544,7 +544,7 @@ class Util:
 
     @staticmethod
     def format_slash(s):
-        if platform.system().lower() == 'windows':
+        if Util.HOST_OS == Util.WINDOWS:
             return s.replace('/', '\\')
         else:
             return s.replace('\\', '/')
@@ -1171,7 +1171,7 @@ class Util:
     BACKUP_SERVER = 'wp-27.sh.intel.com'
     INTEL_SMTP_SERVER = 'ecsmtp.sh.intel.com'
     LOCAL_SMTP_SERVER = 'wp-27.sh.intel.com'
-    WINDOWS = 'windows'
+    WINDOWS = 'win32'
     LINUX = 'linux'
     DARWIN = 'darwin'
     CHROMEOS = 'chromeos'
@@ -1179,7 +1179,7 @@ class Util:
     MAX_REV = 9999999
     BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}' # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
-    HOST_OS = platform.system().lower()
+    HOST_OS = sys.platform
     if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
         if re.search(CHROMEOS, result):
@@ -1489,7 +1489,7 @@ class Program(object):
         parser.add_argument('--proxy', dest='proxy', help='proxy')
         parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
         parser.add_argument('--target-arch', dest='target_arch', help='target arch', choices=['x86', 'arm', 'x86_64', 'arm64'], default='default')
-        parser.add_argument('--target-os', dest='target_os', help='target os, choices can be android, linux, chromeos, windows, darwin', default='default')
+        parser.add_argument('--target-os', dest='target_os', help='target os, choices can be android, linux, chromeos, win32, darwin', default='default')
 
         parser.epilog = '''
 examples:
