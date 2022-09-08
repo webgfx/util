@@ -544,7 +544,7 @@ class Util:
 
     @staticmethod
     def format_slash(s):
-        if Util.HOST_OS == Util.WINDOWS:
+        if sys.platform == 'win32':
             return s.replace('/', '\\')
         else:
             return s.replace('\\', '/')
