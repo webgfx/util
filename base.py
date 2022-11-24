@@ -19,7 +19,7 @@ import os
 from os.path import expanduser
 import pickle
 import platform
-import random
+import uuid
 import re
 import select
 import shutil
@@ -107,7 +107,7 @@ class Util:
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        fail_file = Util.format_slash('%s-%s' % (ScriptRepo.IGNORE_FAIL_FILE, Util.get_datetime()))
+        fail_file = Util.format_slash('%s-%s' % (ScriptRepo.IGNORE_FAIL_FILE, uuid.uuid4()))
         if not dryrun:
             Util.ensure_file(fail_file)
             if Util.HOST_OS == Util.WINDOWS:
