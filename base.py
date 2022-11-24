@@ -19,7 +19,7 @@ import os
 from os.path import expanduser
 import pickle
 import platform
-import uuid
+import random
 import re
 import select
 import shutil
@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 import zipfile
 
 try:
