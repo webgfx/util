@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 import zipfile
 
 try:
@@ -107,7 +108,7 @@ class Util:
         if show_cmd:
             Util.cmd(orig_cmd)
 
-        fail_file = Util.format_slash('%s-%s' % (ScriptRepo.IGNORE_FAIL_FILE, Util.get_datetime()))
+        fail_file = Util.format_slash('%s-%s' % (ScriptRepo.IGNORE_FAIL_FILE, uuid.uuid4()))
         if not dryrun:
             Util.ensure_file(fail_file)
             if Util.HOST_OS == Util.WINDOWS:
