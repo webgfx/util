@@ -1070,6 +1070,121 @@ class Util:
         return name, driver, device_id
 
     @staticmethod
+    def get_intel_gpu_series_type(gpu_device_id: str):
+        lowercase_id = gpu_device_id.lower()
+        masked_id = '%s00' % lowercase_id[:-2]
+        # Gen 12
+        if masked_id == '0x9a00':
+            return 'tigerlake'
+        elif masked_id == '0x4c00':
+            return 'rocketlake'
+        elif masked_id == '0x4900':
+            return 'dg1'
+        elif masked_id == '0x4600':
+            return 'alderlake'
+        elif masked_id in {'0x4f00', '0x5600'}:
+            return 'alchemist'
+        elif masked_id == '0xa700':
+            return 'raptorlake'
+        # Gen 11
+        elif masked_id == '0x8a00':
+            return 'icelake'
+        elif masked_id == '0x4500':
+            return 'elkhartlake'
+        elif masked_id == '0x4e00':
+            return 'jasperlake'
+        # Gen 10
+        elif masked_id == '0x5a00':
+            if lowercase_id in {'0x5a84', '0x5a85'}:
+                return 'apollolake'
+            return 'cannonlake'
+        # Gen 9
+        elif masked_id == '0x1900':
+            return 'skylake'
+        elif masked_id == '0x1a00':
+            return 'apollolake'
+        elif masked_id == '0x3100':
+            return 'geminilake'
+        elif masked_id == '0x5900':
+            if lowercase_id == '0x591c':
+                return 'amberlake'
+            return 'kabylake'
+        elif masked_id == '0x8700':
+            if lowercase_id == '0x87c0':
+                return 'kabylake'
+            elif lowercase_id == '0x87ca':
+                return 'coffeelake'
+            return None
+        elif masked_id == '0x3e00':
+            if lowercase_id in {'0x3ea0', '0x3ea1', '0x3ea2', '0x3ea3', '0x3ea4'}:
+                return 'whiskeylake'
+            return 'coffeelake'
+        elif masked_id == '0x9b00':
+            return 'cometlake'
+        # Gen 8
+        elif masked_id == '0x2200':
+            return 'cherrytrail'
+        elif masked_id == '0x1600':
+            return 'broadwell'
+        # Gen 7
+        elif masked_id == '0x0f00':
+            return 'baytrail'
+        elif masked_id in {'0x0400', '0x0c00', '0x0d00'}:
+            return 'haswell'
+        elif masked_id == '0x0a00':
+            # Gen 9
+            if gpu_device_id == '0x0a84':
+                return 'apollolake'
+            return 'haswell'
+        # Gen 6
+        elif masked_id == '0x0100':
+            # Gen 7
+            if lowercase_id in {'0x0152', '0x0156', '0x015a', '0x0162', '0x0166', '0x016a'}:
+                return 'ivybridge'
+            # Gen 7
+            elif lowercase_id in {'0x0155', '0x0157'}:
+                return 'baytrail'
+            return 'sandybridge'
+        # Gen 5
+        elif masked_id == '0x0000':
+            return 'ironlake'
+        # Gen 4
+        elif masked_id == '0x2900':
+            return 'broadwater'
+        elif masked_id == '0x2a00':
+            if lowercase_id in {'0x2a02', '0x2a12'}:
+                return 'broadwater'
+            elif lowercase_id == '0x2a42':
+                return 'eaglelake'
+            return None
+        elif masked_id == '0x2e00':
+            return 'eaglelake'
+        return None
+
+    @staticmethod
+    def get_intel_gpu_generation(gpu_device_id: str):
+        series_type = Util.get_intel_gpu_series_type(gpu_device_id)
+        if series_type in {'tigerlake', 'rocketlake', 'dg1', 'alderlake', 'alchemist', 'raptorlake'}:
+            return 12
+        elif series_type in {'icelake', 'elkhartlake', 'jasperlake'}:
+            return 11
+        elif series_type == 'cannonlake':
+            return 10
+        elif series_type in {'apollolake', 'skylake', 'geminilake', 'kabylake', 'amberlake', 'coffeelake', 'whiskeylake', 'cometlake'}:
+            return 9
+        elif series_type in {'cherrytrail', 'broadwell'}:
+            return 8
+        elif series_type in {'baytrail', 'haswell', 'ivybridge'}:
+            return 7
+        elif series_type == 'sandybridge':
+            return 6
+        elif series_type == 'ironlake':
+            return 5
+        elif series_type in {'broadwater', 'eaglelake'}:
+            return 4
+        return None
+
+    @staticmethod
     def get_backup_dir(backup_dir, rev):
         if rev == 'latest':
             rev = -1
