@@ -333,6 +333,18 @@ class Util:
         f.close()
 
     @staticmethod
+    def replace_file(file_path, search_text, replace_text):
+        f = open(file_path,'r', encoding='utf-8')
+        data = f.read()
+        f.close()
+
+        new_data = data.replace(search_text, replace_text)
+        if new_data != data:
+            f = open(file_path,'w', encoding='utf-8')
+            f.write(new_data)
+            f.close()
+
+    @staticmethod
     def load_json(file_path):
         f = open(file_path)
         content = json.load(f)
