@@ -975,6 +975,48 @@ class Util:
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
     @staticmethod
+    def update_webgpu_cts_expectations(project_root_dir, gpu_device_id):
+        expectation_file = f'{project_root_dir}/third_party/dawn/webgpu-cts/expectations.txt'
+
+        generation = Util.get_intel_gpu_generation(f'0x{gpu_device_id}')
+        if generation is None:
+            Util.warning(f'Failed to update {expectation_file} because of unknown generation')
+            return
+
+        old_gpu_tag = 'intel-gen-9'
+        new_gpu_tag = f'intel-gen-{generation}'
+        if old_gpu_tag == new_gpu_tag:
+            return
+
+        if not os.path.exists(expectation_file):
+            Util.warning(f'{expectation_file} does not exist')
+            return
+
+        tag_header_scope = False
+        has_new_gpu_tag = False
+        for line in fileinput.input(expectation_file, inplace=True):
+            # Skip the update if the new gpu tag already exists
+            if has_new_gpu_tag:
+                sys.stdout.write(line)
+                continue
+
+            if re.search(new_gpu_tag, line):
+                has_new_gpu_tag = True
+            elif re.search('BEGIN TAG HEADER', line):
+                tag_header_scope = True
+            elif re.search('END TAG HEADER', line):
+                tag_header_scope = False
+            elif re.search(old_gpu_tag, line):
+                if tag_header_scope:
+                    # Append the new gpu tag to tag header
+                    line = line.replace('\n', f' {new_gpu_tag}\n')
+                else:
+                    # Append expectation with the new gpu tag following the old one
+                    line += line.replace(old_gpu_tag, new_gpu_tag)
+            sys.stdout.write(line)
+        fileinput.close()
+
+    @staticmethod
     def get_test_result(result_file, type):
         def _is_pass(val):
             return val == 'PASS'
