@@ -992,25 +992,27 @@ class Util:
             Util.warning(f'{expectation_file} does not exist')
             return
 
-        tag_header_scope = False
-        has_new_gpu_tag = False
+        tag_header_scope = True
+        update_comment = f'# LOCAL UPDATE FOR INTEL GEN{generation} GPUS'
+        has_update_comment = False
         for line in fileinput.input(expectation_file, inplace=True):
-            # Skip the update if the new gpu tag already exists
-            if has_new_gpu_tag:
+            # Skip if the expectation file has been updated.
+            if has_update_comment:
                 sys.stdout.write(line)
                 continue
 
-            if re.search(new_gpu_tag, line):
-                has_new_gpu_tag = True
-            elif re.search('BEGIN TAG HEADER', line):
-                tag_header_scope = True
-            elif re.search('END TAG HEADER', line):
-                tag_header_scope = False
-            elif re.search(old_gpu_tag, line):
-                if tag_header_scope:
+            if tag_header_scope:
+                if re.search(update_comment, line):
+                    has_update_comment = True
+                elif re.search('BEGIN TAG HEADER', line):
+                    line = f'{update_comment}\n' + line
+                elif re.search('END TAG HEADER', line):
+                    tag_header_scope = False
+                elif re.search(old_gpu_tag, line) and not re.search(new_gpu_tag, line):
                     # Append the new gpu tag to tag header
-                    line = line.replace('\n', f' {new_gpu_tag}\n')
-                else:
+                    line = line.replace(old_gpu_tag, f'{old_gpu_tag} {new_gpu_tag}')
+            else:
+                if re.search(old_gpu_tag, line) and not line.startswith('#'):
                     # Append expectation with the new gpu tag following the old one
                     line += line.replace(old_gpu_tag, new_gpu_tag)
             sys.stdout.write(line)
