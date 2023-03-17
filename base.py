@@ -52,7 +52,6 @@ try:
     from selenium.webdriver.support import expected_conditions
     from selenium.webdriver.support.select import Select
     from selenium.webdriver.support.ui import WebDriverWait
-
 except ImportError:
     pass
 
