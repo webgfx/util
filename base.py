@@ -373,7 +373,10 @@ class Util:
 
     @staticmethod
     def has_recent_change(file_path, interval=24 * 3600):
-        if Util.get_epoch_second() - os.path.getmtime(file_path) < interval:
+        # Don't follow symlinks when getting the time of last modification of path, otherwise it
+        # will get the time of the original file, not the symbolic link, and throw FileNotFound
+        # error if the original file is removed.
+        if Util.get_epoch_second() - os.stat(file_path, follow_symlinks=False).st_mtime < interval:
             return True
         else:
             return False
