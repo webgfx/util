@@ -977,9 +977,7 @@ class Util:
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
     @staticmethod
-    def update_webgpu_cts_expectations(project_root_dir):
-        expectation_file = f'{project_root_dir}/third_party/dawn/webgpu-cts/expectations.txt'
-
+    def update_gpu_test_expectations(expectation_file):
         if not os.path.exists(expectation_file):
             Util.warning(f'{expectation_file} does not exist')
             return
