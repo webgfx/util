@@ -641,6 +641,45 @@ class Util:
         return (tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll)
 
     @staticmethod
+    def get_browser_path(browser_name, target_os=None):
+        if not target_os:
+            target_os = Util.HOST_OS
+
+        if target_os == Util.CHROMEOS:
+            browser_path = '/opt/google/chrome/chrome'
+        elif target_os == Util.DARWIN:
+            if browser_name == 'chrome_canary':
+                browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
+            elif browser_name == 'chrome_dev':
+                browser_path = '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev'
+            elif browser_name == 'chrome_beta':
+                browser_path = '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta'
+            elif browser_name == 'chrome_stable':
+                browser_path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        elif target_os == Util.LINUX:
+            if browser_name == 'chrome_dev':
+                browser_path = '/usr/bin/google-chrome-unstable'
+            elif browser_name == 'chrome_beta':
+                browser_path = '/usr/bin/google-chrome-beta'
+            elif browser_name == 'chrome_stable':
+                browser_path = '/usr/bin/google-chrome-stable'
+        elif target_os == Util.WINDOWS:
+            if browser_name == 'chrome_canary':
+                browser_path = '%s/Google/Chrome SxS/Application/chrome.exe' % Util.LOCALAPPDATA_DIR
+            elif browser_name == 'chrome_dev':
+                browser_path = '%s/Google/Chrome Dev/Application/chrome.exe' % Util.PROGRAMFILES_DIR
+            elif browser_name == 'chrome_beta':
+                browser_path = '%s/Google/Chrome Beta/Application/chrome.exe' % Util.PROGRAMFILES_DIR
+            elif browser_name == 'chrome_stable':
+                browser_path = '%s/Google/Chrome/Application/chrome.exe' % Util.PROGRAMFILES_DIR
+            elif browser_name == 'firefox_nightly':
+                browser_path = '%s/Nightly/firefox.exe' % Util.PROGRAMFILES_DIR
+            elif browser_name == 'edge':
+                browser_path = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+
+        return browser_path
+
+    @staticmethod
     def get_webdriver(browser_name, browser_path='', browser_options='', webdriver_file='', debug=False, target_os=''):
         if not target_os:
             target_os = Util.HOST_OS
@@ -1430,6 +1469,7 @@ class Util:
 
     if HOST_OS == WINDOWS:
         APPDATA_DIR = format_slash.__func__(os.getenv('APPDATA'))
+        LOCALAPPDATA_DIR = format_slash.__func__(os.getenv('LOCALAPPDATA'))
         PROGRAMFILES_DIR = format_slash.__func__(os.getenv('PROGRAMFILES'))
         PROGRAMFILESX86_DIR = format_slash.__func__(os.getenv('PROGRAMFILES(X86)'))
 
