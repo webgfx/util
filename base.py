@@ -1075,10 +1075,10 @@ class Util:
     @staticmethod
     def get_test_result(result_file, type):
         def _is_pass(val):
-            return val == 'PASS'
+            return str(val).endswith('PASS')
 
         def _parse_result(key, val, path, pass_fail, fail_pass, fail_fail, pass_pass):
-            if 'expected' in val:
+            if 'expected' in val and 'actual' in val:
                 if not _is_pass(val['expected']) and not _is_pass(val['actual']):
                     fail_fail.append(path)
                 elif not _is_pass(val['expected']) and _is_pass(val['actual']):
