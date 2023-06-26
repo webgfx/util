@@ -1435,37 +1435,64 @@ class Util:
     LINUX_BACKUP_DIR = '%s/backup' % LINUX_WORKSPACE_DIR
     PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
     SERVER_DIR = format_slash.__func__('%s/server' % WORKSPACE_DIR)
-
-    PROJECT_ANGLE_DIR =  format_slash.__func__('%s/angle' % PROJECT_DIR)
-    PROJECT_AQUARIUM_DIR =  format_slash.__func__('%s/aquarium' % PROJECT_DIR)
-    PROJECT_CHROMIUM_DIR =  format_slash.__func__('%s/chromium/src' % PROJECT_DIR)
-    PROJECT_DAWN_DIR =  format_slash.__func__('%s/dawn' % PROJECT_DIR)
-    PROJECT_DEPOT_TOOLS_DIR =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
-    PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
-    PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
-    PROJECT_SKIA_DIR =  format_slash.__func__('%s/skia' % PROJECT_DIR)
-    PROJECT_TFJS_DIR =  format_slash.__func__('%s/tfjs' % PROJECT_DIR)
-    PROJECT_TFJSTEST_DIR =  format_slash.__func__('%s/tfjstest' % PROJECT_DIR)
-    PROJECT_TINT_DIR =  format_slash.__func__('%s/tint' % PROJECT_DIR)
-    PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
-    PROJECT_V8_DIR =  format_slash.__func__('%s/v8' % PROJECT_DIR)
-    PROJECT_WAMR_DIR =  format_slash.__func__('%s/wasm-micro-runtime' % PROJECT_DIR)
-    PROJECT_WASM_DIR =  format_slash.__func__('%s/wasm' % PROJECT_DIR)
-    PROJECT_WASMTIME_DIR =  format_slash.__func__('%s/wasmtime' % PROJECT_DIR)
-    PROJECT_WEBBENCH_DIR =  format_slash.__func__('%s/webbench' % PROJECT_DIR)
-    PROJECT_WEBGL_DIR =  format_slash.__func__('%s/WebGL' % PROJECT_DIR)
-    PROJECT_WEBGPUCTS_DIR =  format_slash.__func__('%s/webgpucts' % PROJECT_DIR)
-    PROJECT_WEBGPUSPEC_DIR =  format_slash.__func__('%s/webgpuspec' % PROJECT_DIR)
-    PROJECT_WEBNIZER_DIR =  format_slash.__func__('%s/webnizer' % PROJECT_DIR)
-    PROJECT_WEBNIZERDEMO_DIR =  format_slash.__func__('%s/webnizer-demo' % PROJECT_DIR)
-    PROJECT_WEBNIZERWEBCLIENT_DIR =  format_slash.__func__('%s/webnizer-webclient' % PROJECT_DIR)
-    PROJECT_WEBRTC_DIR =  format_slash.__func__('%s/webrtc' % PROJECT_DIR)
-    PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
-    PROJECT_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % PROJECT_DIR)
     HOME_DIR = format_slash.__func__(expanduser("~"))
+
+    PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
+    PROJECT_DEPOT_TOOLS_DIR =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
+    PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
+    PROJECT_TFJSTEST_DIR =  format_slash.__func__('%s/tfjstest' % PROJECT_DIR)
+    PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
+    PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
 
     GNP_SCRIPT =  format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
+
+    # contrib
+    CONTRIB_DIR = format_slash.__func__('%s/contrib' % PROJECT_DIR)
+    CONTRIB_ANGLE_DIR =  format_slash.__func__('%s/angle' % CONTRIB_DIR)
+    CONTRIB_AQUARIUM_DIR =  format_slash.__func__('%s/aquarium' % CONTRIB_DIR)
+    CONTRIB_CHROMIUM_DIR =  format_slash.__func__('%s/chromium/src' % CONTRIB_DIR)
+    CONTRIB_DAWN_DIR =  format_slash.__func__('%s/dawn' % CONTRIB_DIR)
+    CONTRIB_SKIA_DIR =  format_slash.__func__('%s/skia' % CONTRIB_DIR)
+    CONTRIB_TFJS_DIR =  format_slash.__func__('%s/tfjs' % CONTRIB_DIR)
+    CONTRIB_TINT_DIR =  format_slash.__func__('%s/tint' % CONTRIB_DIR)
+    CONTRIB_V8_DIR =  format_slash.__func__('%s/v8' % CONTRIB_DIR)
+    CONTRIB_WASM_DIR =  format_slash.__func__('%s/wasm' % CONTRIB_DIR)
+    CONTRIB_WAMR_DIR =  format_slash.__func__('%s/wasm-micro-runtime' % CONTRIB_DIR)
+    CONTRIB_WASMTIME_DIR =  format_slash.__func__('%s/wasmtime' % CONTRIB_DIR)
+    CONTRIB_WEBGL_DIR =  format_slash.__func__('%s/WebGL' % CONTRIB_DIR)
+    CONTRIB_WEBGPUCTS_DIR =  format_slash.__func__('%s/webgpucts' % CONTRIB_DIR)
+    CONTRIB_WEBGPUSPEC_DIR =  format_slash.__func__('%s/webgpuspec' % CONTRIB_DIR)
+    CONTRIB_WEBNIZER_DIR =  format_slash.__func__('%s/webnizer' % CONTRIB_DIR)
+    CONTRIB_WEBNIZERDEMO_DIR =  format_slash.__func__('%s/webnizer-demo' % CONTRIB_DIR)
+    CONTRIB_WEBNIZERWEBCLIENT_DIR =  format_slash.__func__('%s/webnizer-webclient' % CONTRIB_DIR)
+    CONTRIB_WPT_DIR =  format_slash.__func__('%s/web-platform-tests' % CONTRIB_DIR)
+    CONTRIB_WEBRTC_DIR =  format_slash.__func__('%s/webrtc' % CONTRIB_DIR)
+
+    # folder name: [display name, path]
+    CONTRIB_INFO_NAME = 0
+    CONTRIB_INFO_PATH = 1
+    CONTRIB_INFO = {
+        'angle': ['ANGLE', CONTRIB_ANGLE_DIR],
+        'aquarium': ['Aquarium', CONTRIB_AQUARIUM_DIR],
+        'chromium': ['Chromium', CONTRIB_CHROMIUM_DIR],
+        'dawn': ['Dawn', CONTRIB_DAWN_DIR],
+        'skia': ['Skia', CONTRIB_SKIA_DIR],
+        'tfjs': ['TFJS', CONTRIB_TFJS_DIR],
+        'tint': ['Tint', CONTRIB_TINT_DIR],
+        'v8': ['V8', CONTRIB_V8_DIR],
+        'wasm': ['Wasm', CONTRIB_WASM_DIR],
+        'wamr': ['WAMR', CONTRIB_WAMR_DIR],
+        'wasmtime': ['Wasmtime', CONTRIB_WASMTIME_DIR],
+        'webgl': ['WebGL', CONTRIB_WEBGL_DIR],
+        'webgpucts': ['WebGPUCTS', CONTRIB_WEBGPUCTS_DIR],
+        'webgpuspec': ['WebGPUSpec', CONTRIB_WEBGPUSPEC_DIR],
+        'webnizer': ['Webnizer', CONTRIB_WEBNIZER_DIR],
+        'webnizerwebclient': ['WebnizerWebclient', CONTRIB_WEBNIZERWEBCLIENT_DIR],
+        'webnizerdemo': ['WebnizerDemo', CONTRIB_WEBNIZERDEMO_DIR],
+        'webplatformtests': ['WebPlatformTests', CONTRIB_WPT_DIR],
+        'webrtc': ['WebRTC', CONTRIB_WEBRTC_DIR],
+    }
 
     if HOST_OS == WINDOWS:
         APPDATA_DIR = format_slash.__func__(os.getenv('APPDATA'))
