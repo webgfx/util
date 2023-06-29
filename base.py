@@ -1458,6 +1458,7 @@ class Util:
         'aquarium': 'Aquarium',
         'chromium': 'Chromium',
         'dawn': 'Dawn',
+        'onnxruntime': 'ONNXRuntime',
         'skia': 'Skia',
         'tfjs': 'TFJS',
         'tint': 'Tint',
