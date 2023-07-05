@@ -1064,13 +1064,31 @@ class Util:
                         # otherwise comment the line and append the updated line.
                         # For the line already with 'intel' tag, keep as is if there is no duplicate line.
                         if updated_line in intel_lines:
-                            line = "# " + line
+                            line = '# ' + line
                         else:
                             if updated_gpu_tags != gpu_tags:
-                                line =  "# " + line + updated_line
+                                line =  '# ' + line + updated_line
                             intel_lines.append(updated_line)
             sys.stdout.write(line)
         fileinput.close()
+
+        # Locally maintained webgpu cts expectations
+        if not has_update_comment and expectation_file.endswith('webgpu-cts/expectations.txt'):
+            local_webgpu_cts_expectations = [
+                'crbug.com/dawn/0000 [ intel win10 ] webgpu:shader,execution,expression,call,builtin,unpack4x8unorm:unpack:inputSource="storage_r" [ Failure ]',
+                'crbug.com/dawn/0000 [ intel win10 ] webgpu:shader,execution,expression,call,builtin,unpack4x8unorm:unpack:inputSource="storage_rw" [ Failure ]',
+                'crbug.com/dawn/0000 [ intel win10 ] webgpu:shader,execution,expression,call,builtin,unpack4x8unorm:unpack:inputSource="uniform" [ Failure ]'
+            ]
+            expectations_str = ''
+            for expectation in local_webgpu_cts_expectations:
+                if expectation not in intel_lines:
+                    expectations_str = expectations_str + f'{expectation}\n'
+            if expectations_str != '':
+                f = open(expectation_file, 'a')
+                f.write('\n# Locally maintained expectation items\n')
+                f.write(expectations_str)
+                f.close()
+
 
     @staticmethod
     def get_test_result(result_file, type):
