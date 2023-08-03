@@ -4,6 +4,7 @@ import calendar
 import codecs
 import collections
 import datetime
+import distro
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import fileinput
@@ -33,7 +34,6 @@ import uuid
 import zipfile
 
 try:
-    import lsb_release
     import urllib2
 except ImportError:
     pass
@@ -271,8 +271,8 @@ class Util:
 
     @staticmethod
     def pkg_installed(pkg):
-        cmd = 'dpkg -s ' + pkg
-        ret, _ = Util.execute(cmd, show_cmd=False, exit_on_error=False)
+        cmd = 'dpkg -s ' + pkg + ' >/dev/null'
+        ret, _ = Util.execute(cmd, show_cmd=False, return_out=False, exit_on_error=False)
         if ret:
             return False
         else:
@@ -1349,8 +1349,8 @@ class Util:
         HOST_OS_RELEASE = platform.mac_ver()[0]
     elif HOST_OS == LINUX:
         if PYTHON_MAJOR == 3:
-            HOST_OS_RELEASE = lsb_release.get_distro_information()['RELEASE']
-            HOST_OS_DESCRIPTION = lsb_release.get_distro_information()['DESCRIPTION']
+            HOST_OS_RELEASE = distro.version()
+            HOST_OS_DESCRIPTION = distro.name()
         else:
             HOST_OS_RELEASE = platform.linux_distribution()[1]
             HOST_OS_DESCRIPTION = '%s %s' % (platform.linux_distribution()[0], platform.linux_distribution()[1])
