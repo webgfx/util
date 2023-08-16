@@ -1398,13 +1398,11 @@ class Util:
     CONTRIB_INFO_PATH = 1
     CONTRIB_INFO = {
         'angle': 'ANGLE',
-        'aquarium': 'Aquarium',
         'chromium': 'Chromium',
         'dawn': 'Dawn',
         'onnxruntime': 'ONNXRuntime',
         'skia': 'Skia',
         'tfjs': 'TFJS',
-        'tint': 'Tint',
         'v8': 'V8',
         'wamr': 'WAMR',
         'wasm': 'Wasm',
