@@ -1349,7 +1349,7 @@ class Util:
         HOST_OS_RELEASE = platform.mac_ver()[0]
     elif HOST_OS == LINUX:
         if PYTHON_MAJOR == 3:
-            HOST_OS_RELEASE = distro.version()
+            HOST_OS_RELEASE = distro.id()
             HOST_OS_DESCRIPTION = distro.name()
         else:
             HOST_OS_RELEASE = platform.linux_distribution()[1]
