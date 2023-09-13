@@ -4,7 +4,6 @@ import calendar
 import codecs
 import collections
 import datetime
-import distro
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import fileinput
@@ -34,11 +33,8 @@ import uuid
 import zipfile
 
 try:
+    import distro
     import urllib2
-except ImportError:
-    pass
-
-try:
     import win32com.client # install pywin32
 except ImportError:
     pass
