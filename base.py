@@ -1012,68 +1012,6 @@ class Util:
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
     @staticmethod
-    def get_test_result(result_file, type):
-        def _is_pass(val):
-            return str(val).endswith('PASS')
-
-        def _parse_result(key, val, path, pass_fail, fail_pass, fail_fail, pass_pass):
-            if 'expected' in val and 'actual' in val:
-                if not _is_pass(val['expected']) and not _is_pass(val['actual']):
-                    fail_fail.append(path)
-                elif not _is_pass(val['expected']) and _is_pass(val['actual']):
-                    fail_pass.append(path)
-                elif _is_pass(val['expected']) and not _is_pass(val['actual']):
-                    pass_fail.append(path)
-                elif _is_pass(val['expected']) and _is_pass(val['actual']):
-                    pass_pass.append(path)
-            else:
-                for new_key, new_val in val.items():
-                    _parse_result(new_key, new_val, '%s/%s' % (path, new_key), pass_fail, fail_pass, fail_fail, pass_pass)
-
-        pass_fail = []
-        fail_pass = []
-        fail_fail = []
-        pass_pass = []
-
-        try:
-            json_result = json.load(open(result_file))
-        except Exception as e:
-            pass_fail.append('All in %s' % result_file)
-        else:
-            if type in ['gtest_angle', 'webgpu_blink_web_tests']:
-                for key, val in json_result['tests'].items():
-                    _parse_result(key, val, key, pass_fail, fail_pass, fail_fail, pass_pass)
-
-            elif type == 'gtest_chrome':
-                for key, val in json_result['per_iteration_data'][0].items():
-                    if val[0]['status'] == 'SUCCESS':
-                        pass_pass.append(key)
-                    elif val[0]['status'] == 'FAILURE':
-                        pass_fail.append(key)
-
-            elif type == 'angle':
-                errors_count = json_result['errors']
-                failures_count = json_result['failures']
-                pass_fail_count = errors_count + failures_count
-                total_count = json_result['tests']
-                pass_pass_count = total_count - pass_fail_count
-                pass_pass = [0] * pass_pass_count
-                if pass_fail_count:
-                    pass_fail.append('%s in %s' % (pass_fail_count, result_file))
-
-            elif type == 'dawn':
-                for test_suite in json_result['testsuites']:
-                    suite_name = test_suite['name']
-                    for test in test_suite['testsuite']:
-                        test_name = '%s.%s' % (suite_name, test['name'])
-                        if 'failures' in test:
-                            pass_fail.append(test_name)
-                        else:
-                            pass_pass.append(test_name)
-
-        return pass_fail, fail_pass, fail_fail, pass_pass
-
-    @staticmethod
     def get_gpu_info():
         name = ''
         driver = ''
