@@ -1317,7 +1317,6 @@ class Util:
     PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
     PROJECT_DEPOT_TOOLS_DIR =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
     PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
-    PROJECT_TFJSTEST_DIR =  format_slash.__func__('%s/tfjstest' % PROJECT_DIR)
     PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
     PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
 
