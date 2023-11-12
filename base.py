@@ -1185,22 +1185,30 @@ class Util:
                 Util.error('Could not find backup %s' % rev)
 
     @staticmethod
-    def remotify_cmd(server, cmd, extra_arg=''):
+    def ssh_cmd(server, cmd=''):
         new_cmd = 'ssh'
+        # Use shared key by default for the authentication if the key exists.
+        if os.path.exists(Util.SSH_KEY):
+            new_cmd += f' -i {Util.SSH_KEY}'
         # Disable SSH X11 forwarding on Windows to workaround SSH hangs sometimes when executing command remotely.
         # Issue: https://github.com/PowerShell/Win32-OpenSSH/issues/1334
         if Util.HOST_OS == Util.WINDOWS:
             new_cmd += ' -x'
-        new_cmd += ' wp@%s' % server
-        if extra_arg:
-            new_cmd += ' %s' % extra_arg
-        new_cmd += ' "%s"' % cmd
+        new_cmd += f' wp@{server} {cmd}'
         return new_cmd
 
     @staticmethod
+    def scp_cmd(src, dest):
+        cmd = 'scp'
+        # Use shared key by default for the authentication if the key exists.
+        if os.path.exists(Util.SSH_KEY):
+            cmd += f' -i {Util.SSH_KEY}'
+        cmd += f' {src} {dest}'
+        return cmd
+
+    @staticmethod
     def check_server_backup(relative_path, rev_file):
-        cmd = 'ls %s/%s/%s/%s' % (Util.LINUX_BACKUP_DIR, Util.HOST_OS, relative_path, rev_file)
-        cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
+        cmd = Util.ssh_cmd(Util.BACKUP_SERVER, f'ls {Util.LINUX_BACKUP_DIR}/{Util.HOST_OS}/{relative_path}/{rev_file}')
         ret, _ = Util.execute(cmd, exit_on_error=False)
         if ret:
             return False
@@ -1209,12 +1217,8 @@ class Util:
 
     @staticmethod
     def get_server_backup(relative_path, rev='latest'):
-        cmd = 'ls -1t /workspace/backup/%s/%s/ | head -1' % (Util.HOST_OS, relative_path)
-        cmd = Util.remotify_cmd(Util.BACKUP_SERVER, cmd)
-        if Util.HOST_OS == Util.LINUX:
-            shell = True
-        elif Util.HOST_OS == Util.WINDOWS:
-            shell = False
+        cmd = Util.ssh_cmd(Util.BACKUP_SERVER, f'ls -1t /workspace/backup/{Util.HOST_OS}/{relative_path}/ | head -1')
+        shell = Util.HOST_OS == Util.LINUX
         _, out = Util.execute(cmd, return_out=True, shell=shell, exit_on_error=False)
         match = re.search('%s' % Util.BACKUP_PATTERN, out)
         rev_name = match.group(0)
@@ -1229,7 +1233,8 @@ class Util:
         local_backup_dir = '%s/%s' % (Util.BACKUP_DIR, relative_path)
         Util.ensure_dir(local_backup_dir)
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists('%s/%s' % (local_backup_dir, rev_file)):
-            Util.execute('scp wp@%s:/workspace/backup/%s/%s/%s %s' % (Util.BACKUP_SERVER, Util.HOST_OS, relative_path, rev_file, local_backup_dir))
+            cmd = Util.scp_cmd(f'wp@{Util.BACKUP_SERVER}:/workspace/backup/{Util.HOST_OS}/{relative_path}/{rev_file}', local_backup_dir)
+            Util.execute(cmd)
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)):
             if Util.HOST_OS == Util.LINUX:
                 Util.chdir(local_backup_dir)
@@ -1322,6 +1327,12 @@ class Util:
 
     GNP_SCRIPT =  format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
+
+    # We cannot ensure that all users on a host have ssh keys, so use a shared key
+    # instead of personal key to allow the service to always access server, no matter
+    # which user logs in.
+    SSH_DIR = format_slash.__func__(f'{HOME_DIR}/.ssh')
+    SSH_KEY = format_slash.__func__(f'{SSH_DIR}/id_rsa_common')
 
     # contrib
     # folder name: [display name, path]
