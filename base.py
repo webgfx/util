@@ -1261,8 +1261,6 @@ class Util:
         return rev_name, date, rev
 
     # constants
-    PYTHON = 'python3'
-    PYTHON_MAJOR = sys.version_info.major
     MYSQL_SERVER = 'wp-27'
     BACKUP_SERVER = 'wp-27.sh.intel.com'
     BACKUP_SERVER2 = 'wp-28.sh.intel.com' # the backup server for backup_server
@@ -1277,6 +1275,10 @@ class Util:
     BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}' # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
     HOST_OS = sys.platform
+    PYTHON = 'python3'
+    if HOST_OS == WINDOWS:
+        PYTHON = 'python.exe' # Use default installed python on Windows
+    PYTHON_MAJOR = sys.version_info.major
     if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
         if re.search(CHROMEOS, result):
