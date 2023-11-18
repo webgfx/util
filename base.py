@@ -259,6 +259,11 @@ class Util:
             os.remove(file_path)
 
     @staticmethod
+    def ensure_newfile(file_path):
+        Util.ensure_nofile(file_path)
+        Util.ensure_file(file_path)
+
+    @staticmethod
     def ensure_symlink(src, dst):
         if os.path.exists(dst):
             return
