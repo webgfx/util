@@ -5,6 +5,7 @@ import socket
 import subprocess
 from telemetry.internal.browser import browser_finder, browser_options
 from selenium import webdriver
+
 CHROMEDRIVER_EXE_PATH = '/usr/local/chromedriver/chromedriver'
 
 
@@ -37,7 +38,9 @@ class chromedriver_server(object):
         port = get_unused_port()
         chromedriver_args.append('--port=%d' % port)
         self.url = 'http://localhost:%d' % port
-        self.sp = subprocess.Popen(chromedriver_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=None)
+        self.sp = subprocess.Popen(
+            chromedriver_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=None
+        )
         atexit.register(self.close)
 
     def close(self):
@@ -52,7 +55,7 @@ class chromedriver_server(object):
 class Chrome(object):
     def __init__(self, extra_browser_args=None, username=None, password=None):
         finder_options = browser_options.BrowserFinderOptions()
-        finder_options.browser_type = ('system')
+        finder_options.browser_type = 'system'
         if extra_browser_args:
             finder_options.browser_options.AppendExtraBrowserArgs(extra_browser_args)
         finder_options.verbosity = 0
@@ -99,6 +102,7 @@ def get_unused_port():
                 return None
         finally:
             s.close()
+
     while True:
         port = try_bind(0, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         if port and try_bind(port, socket.SOCK_DGRAM, socket.IPPROTO_UDP):

@@ -35,7 +35,7 @@ import zipfile
 try:
     import distro
     import urllib2
-    import win32com.client # install pywin32
+    import win32com.client  # install pywin32
 except ImportError:
     pass
 
@@ -50,6 +50,7 @@ try:
     from selenium.webdriver.support.ui import WebDriverWait
 except ImportError:
     pass
+
 
 def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
     """Retry calling the decorated function using an exponential backoff.
@@ -70,8 +71,8 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
     :param logger: logger to use. If None, print
     :type logger: logging.Logger instance
     """
-    def deco_retry(f):
 
+    def deco_retry(f):
         @wraps(f)
         def f_retry(*args, **kwargs):
             mtries, mdelay = tries, delay
@@ -93,9 +94,20 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
 
     return deco_retry
 
+
 class Util:
     @staticmethod
-    def execute(cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False, shell=True, log_file='', timeout=0):
+    def execute(
+        cmd,
+        show_cmd=True,
+        exit_on_error=True,
+        return_out=False,
+        show_duration=False,
+        dryrun=False,
+        shell=True,
+        log_file='',
+        timeout=0,
+    ):
         if show_duration:
             timer = Timer()
 
@@ -118,7 +130,9 @@ class Util:
         ret = 0
         out = ''
         if timeout or return_out:
-            process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+            process = subprocess.Popen(
+                cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+            )
             if timeout:
                 process_timer = threading.Timer(timeout, process.kill)
                 process_timer.start()
@@ -144,9 +158,12 @@ class Util:
                 Util.warning('Failed to execute command [%s]' % cmd)
 
         if show_duration:
-            Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), orig_cmd, inspect.stack()[1][3]))
+            Util.info(
+                '%s was spent to execute command "%s" in function "%s"'
+                % (timer.stop(), orig_cmd, inspect.stack()[1][3])
+            )
 
-        return  [ret, out]
+        return [ret, out]
 
     @staticmethod
     # Do not care about out, log_file
@@ -181,7 +198,9 @@ class Util:
                 Util.warning('Failed to execute command [%s]' % cmd)
 
         if show_duration:
-            Util.info('%s was spent to execute command "%s" in function "%s"' % (timer.stop(), cmd, inspect.stack()[1][3]))
+            Util.info(
+                '%s was spent to execute command "%s" in function "%s"' % (timer.stop(), cmd, inspect.stack()[1][3])
+            )
 
         return [ret, '']
 
@@ -310,7 +329,7 @@ class Util:
         f = open(file_path)
         lines = [line.rstrip('\n') for line in f]
         if len(lines) > 0:
-            while (lines[-1] == ''):
+            while lines[-1] == '':
                 del lines[-1]
         f.close()
         return lines
@@ -406,7 +425,7 @@ class Util:
     def del_filetype_in_dir(dir_path, filetype):
         for root, dirs, files in os.walk(dir_path):
             for name in files:
-                if (name.endswith('.%s' % filetype)):
+                if name.endswith('.%s' % filetype):
                     os.remove(os.path.join(root, name))
 
     @staticmethod
@@ -576,7 +595,9 @@ class Util:
         return relative_out_dir
 
     @staticmethod
-    def parse_git_line(lines, index, tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll):
+    def parse_git_line(
+        lines, index, tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll
+    ):
         line = lines[index]
         strip_line = line.strip()
         # hash
@@ -693,7 +714,13 @@ class Util:
             elif target_os in [Util.WINDOWS, Util.LINUX]:
                 options.append('--start-maximized')
             if target_os != Util.CHROMEOS:
-                options.extend(['--disk-cache-dir=/dev/null', '--disk-cache-size=1', '--user-data-dir=%s' % (ScriptRepo.USER_DATA_DIR)])
+                options.extend(
+                    [
+                        '--disk-cache-dir=/dev/null',
+                        '--disk-cache-size=1',
+                        '--user-data-dir=%s' % (ScriptRepo.USER_DATA_DIR),
+                    ]
+                )
             if debug:
                 service_args = ["--verbose", "--log-path=%s/chromedriver.log" % ScriptRepo.IGNORE_LOG_DIR]
             else:
@@ -708,7 +735,9 @@ class Util:
                 browser_path = '/opt/google/chrome/chrome'
             elif target_os == Util.DARWIN:
                 if browser_name == 'chrome':
-                    browser_path = Util.PROJECT_CHROMIUM_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                    browser_path = (
+                        Util.PROJECT_CHROMIUM_DIR + '/%s/Release/Chromium.app/Contents/MacOS/Chromium' % out_dir
+                    )
                 elif browser_name == 'chrome_canary':
                     browser_path = '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
             elif target_os == Util.LINUX:
@@ -753,6 +782,7 @@ class Util:
         # driver
         if target_os == Util.CHROMEOS:
             import chromeoswebdriver
+
             driver = chromeoswebdriver.chromedriver(extra_chrome_flags=options).driver
         elif target_os in [Util.DARWIN, Util.LINUX, Util.WINDOWS]:
             if 'chrome' in browser_name:
@@ -764,9 +794,12 @@ class Util:
                     service_args = ["--verbose", "--log-path=%s/chromedriver.log" % ScriptRepo.IGNORE_LOG_DIR]
                 else:
                     service_args = []
-                driver = webdriver.Chrome(executable_path=webdriver_file, chrome_options=chrome_options, service_args=service_args)
+                driver = webdriver.Chrome(
+                    executable_path=webdriver_file, chrome_options=chrome_options, service_args=service_args
+                )
             elif 'firefox' in browser_name:
                 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
                 capabilities = DesiredCapabilities.FIREFOX
                 capabilities['marionette'] = True
                 # capabilities['binary'] = browser_path
@@ -958,7 +991,11 @@ class Util:
     @staticmethod
     # committer date, instead of author date
     def get_working_dir_date():
-        return Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', show_cmd=False, return_out=True)[1].rstrip('\n').rstrip('\r')
+        return (
+            Util.execute('git log -1 --date=format:"%Y%m%d" --format="%cd"', show_cmd=False, return_out=True)[1]
+            .rstrip('\n')
+            .rstrip('\r')
+        )
 
     @staticmethod
     def get_working_dir_hash():
@@ -987,7 +1024,7 @@ class Util:
     @staticmethod
     def set_mesa(dir, rev=0, type='iris'):
         if rev == 'system':
-            #Util.ensure_pkg('mesa-vulkan-drivers')
+            # Util.ensure_pkg('mesa-vulkan-drivers')
             rev_name = 'system'
             Util.info('Use system Mesa')
         else:
@@ -1021,7 +1058,7 @@ class Util:
         name = ''
         driver = ''
         if Util.HOST_OS == Util.LINUX:
-            #Util.ensure_pkg('mesa-utils')
+            # Util.ensure_pkg('mesa-utils')
             _, out = Util.execute('lspci -nn | grep VGA', return_out=True, log_file='')
             match = re.search(': (.*) \[.*:(.*)\]', out)
             name = match.group(1)
@@ -1150,7 +1187,16 @@ class Util:
             return 11
         elif series_type == 'cannonlake':
             return 10
-        elif series_type in {'apollolake', 'skylake', 'geminilake', 'kabylake', 'amberlake', 'coffeelake', 'whiskeylake', 'cometlake'}:
+        elif series_type in {
+            'apollolake',
+            'skylake',
+            'geminilake',
+            'kabylake',
+            'amberlake',
+            'coffeelake',
+            'whiskeylake',
+            'cometlake',
+        }:
             return 9
         elif series_type in {'cherrytrail', 'broadwell'}:
             return 8
@@ -1237,8 +1283,12 @@ class Util:
 
         local_backup_dir = '%s/%s' % (Util.BACKUP_DIR, relative_path)
         Util.ensure_dir(local_backup_dir)
-        if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists('%s/%s' % (local_backup_dir, rev_file)):
-            cmd = Util.scp_cmd(f'wp@{Util.BACKUP_SERVER}:/workspace/backup/{Util.HOST_OS}/{relative_path}/{rev_file}', local_backup_dir)
+        if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)) and not os.path.exists(
+            '%s/%s' % (local_backup_dir, rev_file)
+        ):
+            cmd = Util.scp_cmd(
+                f'wp@{Util.BACKUP_SERVER}:/workspace/backup/{Util.HOST_OS}/{relative_path}/{rev_file}', local_backup_dir
+            )
             Util.execute(cmd)
         if not os.path.exists('%s/%s' % (local_backup_dir, rev_name)):
             if Util.HOST_OS == Util.LINUX:
@@ -1246,7 +1296,9 @@ class Util:
                 Util.execute('tar zxf %s.tar.gz' % rev_name)
             elif Util.HOST_OS == Util.WINDOWS:
                 # to workaround filename too long issue, we need to extract to tmp folder first
-                zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall('%s/%s' % (Util.WORKSPACE_DIR, rev_name))
+                zipfile.ZipFile('%s/%s' % (local_backup_dir, rev_file)).extractall(
+                    '%s/%s' % (Util.WORKSPACE_DIR, rev_name)
+                )
                 try:
                     shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
                 except Exception as e:
@@ -1268,7 +1320,7 @@ class Util:
     # constants
     MYSQL_SERVER = 'wp-27'
     BACKUP_SERVER = 'wp-27.sh.intel.com'
-    BACKUP_SERVER2 = 'wp-28.sh.intel.com' # the backup server for backup_server
+    BACKUP_SERVER2 = 'wp-28.sh.intel.com'  # the backup server for backup_server
     INTEL_SMTP_SERVER = 'ecsmtp.sh.intel.com'
     LOCAL_SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'win32'
@@ -1277,12 +1329,12 @@ class Util:
     CHROMEOS = 'chromeos'
     ANDROID = 'android'
     MAX_REV = 9999999
-    BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}' # <date>-<rev>-<hash>
+    BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}'  # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
     HOST_OS = sys.platform
     PYTHON = 'python3'
     if HOST_OS == WINDOWS:
-        PYTHON = 'python.exe' # Use default installed python on Windows
+        PYTHON = 'python.exe'  # Use default installed python on Windows
     PYTHON_MAJOR = sys.version_info.major
     if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
@@ -1320,19 +1372,19 @@ class Util:
     else:
         WORKSPACE_DIR = LINUX_WORKSPACE_DIR
 
-    BACKUP_DIR =  format_slash.__func__('%s/backup' % WORKSPACE_DIR)
+    BACKUP_DIR = format_slash.__func__('%s/backup' % WORKSPACE_DIR)
     LINUX_BACKUP_DIR = '%s/backup' % LINUX_WORKSPACE_DIR
-    PROJECT_DIR =  format_slash.__func__('%s/project' % WORKSPACE_DIR)
+    PROJECT_DIR = format_slash.__func__('%s/project' % WORKSPACE_DIR)
     SERVER_DIR = format_slash.__func__('%s/server' % WORKSPACE_DIR)
     HOME_DIR = format_slash.__func__(expanduser("~"))
 
-    PROJECT_MESA_DIR =  format_slash.__func__('%s/mesa' % PROJECT_DIR)
-    PROJECT_DEPOT_TOOLS_DIR =  format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
-    PROJECT_MESA_BACKUP_DIR =  format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
-    PROJECT_TOOLKIT_DIR =  format_slash.__func__('%s/toolkit' % PROJECT_DIR)
-    PROJECT_WORK_DIR =  format_slash.__func__('%s/work' % PROJECT_DIR)
+    PROJECT_MESA_DIR = format_slash.__func__('%s/mesa' % PROJECT_DIR)
+    PROJECT_DEPOT_TOOLS_DIR = format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
+    PROJECT_MESA_BACKUP_DIR = format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
+    PROJECT_TOOLKIT_DIR = format_slash.__func__('%s/toolkit' % PROJECT_DIR)
+    PROJECT_WORK_DIR = format_slash.__func__('%s/work' % PROJECT_DIR)
 
-    GNP_SCRIPT =  format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
+    GNP_SCRIPT = format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
 
     # We cannot ensure that all users on a host have ssh keys, so use a shared key
@@ -1390,7 +1442,8 @@ class Util:
     INTERNAL_WEBSERVER = 'http://wp-27'
     INTERNAL_WEBSERVER_WEBBENCH = '%s/%s/webbench' % (INTERNAL_WEBSERVER, PROJECT_DIR)
 
-class Timer():
+
+class Timer:
     def __init__(self, microsecond=False):
         self.timer = [0, 0]
         if microsecond:
@@ -1405,6 +1458,7 @@ class Timer():
             self.timer[1] = datetime.datetime.now().replace(microsecond=0)
 
         return self.timer[1] - self.timer[0]
+
 
 class ScriptRepo:
     tmp_dir = Util.get_dir(__file__)
@@ -1437,7 +1491,8 @@ class ScriptRepo:
     else:
         WGET_FILE = 'wget'
 
-class ChromiumRepo():
+
+class ChromiumRepo:
     FAKE_REV = 9999999
 
     COMMIT_STR = 'commit (.*)'
@@ -1504,7 +1559,12 @@ class ChromiumRepo():
         head_rev = self.get_repo_rev(branch)
         if max_rev > head_rev:
             Util.error('Revision %s is not ready' % max_rev)
-        cmd = 'git log --shortstat origin/%s~%s..origin/%s~%s ' % (branch, head_rev - min_rev + 1, branch, head_rev - max_rev)
+        cmd = 'git log --shortstat origin/%s~%s..origin/%s~%s ' % (
+            branch,
+            head_rev - min_rev + 1,
+            branch,
+            head_rev - max_rev,
+        )
         _, out = Util.execute(cmd, show_cmd=False, return_out=True)
         lines = out.split('\n')
 
@@ -1531,7 +1591,27 @@ class ChromiumRepo():
                 tmp_insertion = -1
                 tmp_deletion = -1
                 tmp_is_roll = False
-            (tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll) = self._parse_line(lines, index, tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll)
+            (
+                tmp_rev,
+                tmp_hash,
+                tmp_author,
+                tmp_date,
+                tmp_subject,
+                tmp_insertion,
+                tmp_deletion,
+                tmp_is_roll,
+            ) = self._parse_line(
+                lines,
+                index,
+                tmp_rev,
+                tmp_hash,
+                tmp_author,
+                tmp_date,
+                tmp_subject,
+                tmp_insertion,
+                tmp_deletion,
+                tmp_is_roll,
+            )
             if tmp_deletion >= 0:
                 rev_info[tmp_rev] = [tmp_hash, '', '', 0]
                 if tmp_is_roll:
@@ -1540,7 +1620,19 @@ class ChromiumRepo():
                     rev_info[tmp_rev][self.REV_INFO_INDEX_ROLL_HASH] = match.group(3)
                     rev_info[tmp_rev][self.REV_INFO_INDEX_ROLL_COUNT] = int(match.group(4))
 
-    def _parse_line(self, lines, index, tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll):
+    def _parse_line(
+        self,
+        lines,
+        index,
+        tmp_rev,
+        tmp_hash,
+        tmp_author,
+        tmp_date,
+        tmp_subject,
+        tmp_insertion,
+        tmp_deletion,
+        tmp_is_roll,
+    ):
         line = lines[index]
         strip_line = line.strip()
         # hash
@@ -1610,18 +1702,37 @@ class ChromiumRepo():
         for key in rev_info:
             return key
 
+
 class Program(object):
     def __init__(self, parser):
-        parser.add_argument('--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second')
+        parser.add_argument(
+            '--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second'
+        )
         parser.add_argument('--log-file', dest='log_file', help='log file')
         parser.add_argument('--proxy', dest='proxy', help='proxy')
         parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
-        parser.add_argument('--target-arch', dest='target_arch', help='target arch', choices=['x86', 'arm', 'x86_64', 'arm64'], default='default')
-        parser.add_argument('--target-os', dest='target_os', help='target os, choices can be android, linux, chromeos, win32, darwin', default='default')
+        parser.add_argument(
+            '--target-arch',
+            dest='target_arch',
+            help='target arch',
+            choices=['x86', 'arm', 'x86_64', 'arm64'],
+            default='default',
+        )
+        parser.add_argument(
+            '--target-os',
+            dest='target_os',
+            help='target os, choices can be android, linux, chromeos, win32, darwin',
+            default='default',
+        )
 
-        parser.epilog = '''
+        parser.epilog = (
+            '''
 examples:
-{0} {1} --root-dir --target-arch'''.format(Util.PYTHON, parser.prog) + parser.epilog
+{0} {1} --root-dir --target-arch'''.format(
+                Util.PYTHON, parser.prog
+            )
+            + parser.epilog
+        )
         parser.formatter_class = argparse.RawTextHelpFormatter
         args = parser.parse_args()
         self.args = args
@@ -1677,10 +1788,20 @@ examples:
         Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
 
     def _execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
-        return Util.execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, return_out=return_out, show_duration=show_duration, dryrun=dryrun, log_file=self.log_file)
+        return Util.execute(
+            cmd=cmd,
+            show_cmd=show_cmd,
+            exit_on_error=exit_on_error,
+            return_out=return_out,
+            show_duration=show_duration,
+            dryrun=dryrun,
+            log_file=self.log_file,
+        )
 
     def _simple_execute(self, cmd, show_cmd=True, exit_on_error=True, show_duration=False, dryrun=False):
-        return Util.simple_execute(cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, show_duration=show_duration, dryrun=dryrun)
+        return Util.simple_execute(
+            cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, show_duration=show_duration, dryrun=dryrun
+        )
 
     def _set_boto(self):
         if not self.args.proxy:
