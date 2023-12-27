@@ -1103,6 +1103,8 @@ class Util:
             return 'alchemist'
         elif masked_id == '0xa700':
             return 'raptorlake'
+        elif masked_id == '0x7d00':
+            return 'meteorlake'
         # Gen 11
         elif masked_id == '0x8a00':
             return 'icelake'
@@ -1181,7 +1183,7 @@ class Util:
     @staticmethod
     def get_intel_gpu_generation(gpu_device_id: str):
         series_type = Util.get_intel_gpu_series_type(gpu_device_id)
-        if series_type in {'tigerlake', 'rocketlake', 'dg1', 'alderlake', 'alchemist', 'raptorlake'}:
+        if series_type in {'tigerlake', 'rocketlake', 'dg1', 'alderlake', 'alchemist', 'raptorlake', 'meteorlake'}:
             return 12
         elif series_type in {'icelake', 'elkhartlake', 'jasperlake'}:
             return 11
