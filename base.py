@@ -903,7 +903,7 @@ class Util:
     # path_xxx means full path of file
     # need_bk means if it needs .bk file
     @staticmethod
-    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_sylk=False, need_bk=True):
+    def copy_file(src_dir, src_name, dest_dir, dest_name='', is_sylk=False, need_bk=True, show_cmd=False):
         if not os.path.exists(dest_dir):
             # we do not warn here as it's a normal case
             # warning(dest_dir + ' does not exist')
@@ -961,17 +961,17 @@ class Util:
             cmd = 'rm -f "%s"' % path_dest_bk
             if need_sudo:
                 cmd = 'sudo ' + cmd
-            Util.execute(cmd, show_cmd=False, exit_on_error=False)
+            Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
             cmd = 'cp -f "%s" "%s"' % (path_dest, path_dest_bk)
             if need_sudo:
                 cmd = 'sudo ' + cmd
-            Util.execute(cmd, show_cmd=False, exit_on_error=False)
+            Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
 
         if need_copy:
             cmd = 'rm "%s"' % path_dest
             if need_sudo:
                 cmd = 'sudo ' + cmd
-            Util.execute(cmd, show_cmd=False, exit_on_error=False)
+            Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
 
             if is_sylk:
                 if Util.HOST_OS == Util.WINDOWS:
@@ -982,7 +982,7 @@ class Util:
                 cmd = 'cp -rf ' + path_src + ' ' + path_dest
             if need_sudo:
                 cmd = 'sudo ' + cmd
-            result = Util.execute(cmd, show_cmd=False)
+            result = Util.execute(cmd, show_cmd=show_cmd)
             if result[0]:
                 error('Failed to execute %s. You may need to run cmd with administrator priviledge' % cmd)
 
