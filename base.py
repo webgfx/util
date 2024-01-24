@@ -1056,7 +1056,9 @@ class Util:
     @staticmethod
     def get_gpu_info():
         name = ''
-        driver = ''
+        driver_date = ''
+        driver_ver = ''
+
         if Util.HOST_OS == Util.LINUX:
             # Util.ensure_pkg('mesa-utils')
             _, out = Util.execute('lspci -nn | grep VGA', return_out=True, log_file='')
@@ -1064,27 +1066,39 @@ class Util:
             name = match.group(1)
             device_id = match.group(2)
             if 'NVIDIA' in name:
-                _, driver = Util.execute('nvidia-smi |grep Driver', return_out=True)
-                match = re.search('Driver Version: (\d+.\d+)', driver)
+                _, driver_ver = Util.execute('nvidia-smi |grep Driver', return_out=True)
+                match = re.search('Driver Version: (\d+.\d+)', driver_ver)
             else:
-                _, driver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
-                match = re.search('(Mesa.*)', driver)
+                _, driver_ver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
+                match = re.search('(Mesa.*)', driver_ver)
             if match:
-                driver = match.group(1)
+                driver_ver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
-            cmd = 'wmic path win32_VideoController get DriverVersion,Name,PNPDeviceID /value'
+            cmd = 'wmic path win32_VideoController get DriverDate,DriverVersion,Name,PNPDeviceID /value'
             lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n\n')
             for line in lines:
                 match = re.match(r'(.*)=(.*)', line)
                 if match:
-                    if match.group(1) == 'DriverVersion':
-                        driver = match.group(2)
+                    if match.group(1) == 'DriverDate':
+                        driver_date = match.group(2)[0:8]
+                    elif match.group(1) == 'DriverVersion':
+                        driver_ver = match.group(2)
                     elif match.group(1) == 'Name' and not match.group(2) == 'Microsoft Remote Display Adapter':
                         name = match.group(2)
                     elif match.group(1) == 'PNPDeviceID' and not match.group(2)[0:3] == 'SWD':
                         device_id = re.search('DEV_(.{4})', match.group(2)).group(1)
                         break
-        return name, driver, device_id
+        return name, driver_date, driver_ver, device_id
+
+    @staticmethod
+    def get_os_info():
+        if Util.HOST_OS == Util.WINDOWS:
+            _, output = Util.execute('ver', show_cmd=False, return_out=True)
+            match = re.search('\[Version (.*)\]', output)
+            ver = match.group(1)
+        else:
+            ver = platform.version()
+        return ver
 
     @staticmethod
     def get_intel_gpu_series_type(gpu_device_id: str):
