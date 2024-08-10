@@ -1429,10 +1429,6 @@ class Util:
         'webgl': 'WebGL',
         'webgpucts': 'WebGPUCTS',
         'webgpuspec': 'WebGPUSpec',
-        'webinizer': 'Webinizer',
-        'webnizer': 'Webnizer',
-        'webnizerdemo': 'WebnizerDemo',
-        'webnizerwebclient': 'WebnizerWebclient',
         'webplatformtests': 'WebPlatformTests',
         'webrtc': 'WebRTC',
     }
