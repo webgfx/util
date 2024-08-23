@@ -1337,7 +1337,7 @@ class Util:
     MYSQL_SERVER = 'wp-27'
     BACKUP_SERVER = 'wp-27.sh.intel.com'
     BACKUP_SERVER2 = 'wp-28.sh.intel.com'  # the backup server for backup_server
-    INTEL_SMTP_SERVER = 'ecsmtp.sh.intel.com'
+    INTEL_SMTP_SERVER = 'ecsmtp.pdx.intel.com'
     LOCAL_SMTP_SERVER = 'wp-27.sh.intel.com'
     WINDOWS = 'win32'
     LINUX = 'linux'
