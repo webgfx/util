@@ -911,45 +911,45 @@ class Util:
 
         if not dest_name:
             dest_name = src_name
-        path_dest = dest_dir + '/' + dest_name
-        path_dest_bk = path_dest + '.bk'
+        dest_path = dest_dir + '/' + dest_name
+        dest_path_bk = dest_path + '.bk'
 
         # hack the src_name to support machine specific config
         # For example, wp-27-hostapd.conf
-        # src_name is changed here, so we can't put this before path_dest definition
+        # src_name is changed here, so we can't put this before dest_path definition
         if os.path.exists(src_dir + '/' + Util.HOST_NAME + '-' + src_name):
             src_name = Util.HOST_NAME + '-' + src_name
-        path_src = src_dir + '/' + src_name
-        if not os.path.exists(path_src):
-            Util.warning(path_src + ' does not exist')
+        src_path = src_dir + '/' + src_name
+        if not os.path.exists(src_path):
+            Util.warning(src_path + ' does not exist')
             return False
 
         need_copy = False
         need_bk_tmp = False
         has_update = False
 
-        if not Util.has_path(path_dest) or Util.has_link(path_dest) != is_sylk:
+        if not Util.has_path(dest_path) or Util.has_link(dest_path) != is_sylk:
             need_copy = True
             need_bk_tmp = True
             has_update = True
         elif is_sylk:  # both are symbolic link
-            if Util.get_link(path_dest) != path_src:
+            if Util.get_link(dest_path) != src_path:
                 need_copy = True
                 need_bk_tmp = True
                 has_update = True
             else:  # same link
-                if not Util.has_path(path_dest_bk):
+                if not Util.has_path(dest_path_bk):
                     need_bk_tmp = True
                     has_update = True
                 else:
-                    if Util.get_md5(path_dest) != Util.get_md5(path_dest_bk):
+                    if Util.get_md5(dest_path) != Util.get_md5(dest_path_bk):
                         need_bk_tmp = True
                         has_update = True
         else:  # both are real files
-            if not os.path.exists(path_dest_bk):
+            if not os.path.exists(dest_path_bk):
                 need_bk_tmp = True
 
-            if Util.get_md5(path_dest) != Util.get_md5(path_src):
+            if Util.get_md5(dest_path) != Util.get_md5(src_path):
                 need_copy = True
                 need_bk_tmp = True
                 has_update = True
@@ -958,33 +958,48 @@ class Util:
         need_sudo = Util.need_sudo(dest_dir)
 
         if need_bk_tmp and need_bk:
-            cmd = 'rm -f "%s"' % path_dest_bk
-            if need_sudo:
-                cmd = 'sudo ' + cmd
-            Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
-            cmd = 'cp -f "%s" "%s"' % (path_dest, path_dest_bk)
-            if need_sudo:
-                cmd = 'sudo ' + cmd
-            Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
+            if Util.HOST_OS == Util.WINDOWS:
+                os.remove(dest_path_bk)
+                shutil.copyfile(dest_path, dest_path_bk)
+            else:
+                cmd = f'rm -f {dest_path_bk}'
+                if need_sudo:
+                    cmd = f'sudo {cmd}'
+                Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
+
+                cmd = f'cp -f "{dest_path}" "{dest_path_bk}"'
+                if need_sudo:
+                    cmd = f'sudo {cmd}'
+                Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
 
         if need_copy:
-            cmd = 'rm "%s"' % path_dest
-            if need_sudo:
-                cmd = 'sudo ' + cmd
-            Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
+            if Util.HOST_OS == Util.WINDOWS:
+                os.remove(dest_path)
+            else:
+                cmd = f'rm "{dest_path}"'
+                if need_sudo:
+                    cmd = f'sudo {cmd}'
+                Util.execute(cmd, show_cmd=show_cmd, exit_on_error=False)
 
             if is_sylk:
                 if Util.HOST_OS == Util.WINDOWS:
-                    cmd = 'mklink "%s" "%s"' % (path_dest, path_src)
+                    cmd = f'mklink "{dest_path}" "{src_path}"'
                 else:
-                    cmd = 'ln -s ' + path_src + ' ' + path_dest
+                    cmd = f'ln -s {src_path} {dest_path}'
+
+                result = Util.execute(cmd, show_cmd=show_cmd)
+                if result[0]:
+                    error(f'Failed to execute {cmd}. You may need to run cmd with administrator priviledge')
             else:
-                cmd = 'cp -rf ' + path_src + ' ' + path_dest
-            if need_sudo:
-                cmd = 'sudo ' + cmd
-            result = Util.execute(cmd, show_cmd=show_cmd)
-            if result[0]:
-                error('Failed to execute %s. You may need to run cmd with administrator priviledge' % cmd)
+                if Util.HOST_OS == Util.WINDOWS:
+                    shutil.copyfile(src_path, dest_path)
+                else:
+                    cmd = f'cp -rf {src_path} {dest_path}'
+                    if need_sudo:
+                        cmd = f'sudo {cmd}'
+                    result = Util.execute(cmd, show_cmd=show_cmd)
+                    if result[0]:
+                        error(f'Failed to execute {cmd}. You may need to run cmd with administrator priviledge')
 
         return has_update
 
@@ -1062,12 +1077,12 @@ class Util:
         if Util.HOST_OS == Util.LINUX:
             # Util.ensure_pkg('mesa-utils')
             _, out = Util.execute('lspci -nn | grep VGA', return_out=True, log_file='')
-            match = re.search(': (.*) \[.*:(.*)\]', out)
+            match = re.search(r': (.*) \[.*:(.*)\]', out)
             name = match.group(1)
             device_id = match.group(2)
             if 'NVIDIA' in name:
                 _, driver_ver = Util.execute('nvidia-smi |grep Driver', return_out=True)
-                match = re.search('Driver Version: (\d+.\d+)', driver_ver)
+                match = re.search(r'Driver Version: (\d+.\d+)', driver_ver)
             else:
                 _, driver_ver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
                 match = re.search('(Mesa.*)', driver_ver)
@@ -1094,7 +1109,7 @@ class Util:
     def get_os_info():
         if Util.HOST_OS == Util.WINDOWS:
             _, output = Util.execute('ver', show_cmd=False, return_out=True)
-            match = re.search('\[Version (.*)\]', output)
+            match = re.search(r'\[Version (.*)\]', output)
             ver = match.group(1)
         else:
             ver = platform.version()
