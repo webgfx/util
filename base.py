@@ -1004,6 +1004,13 @@ class Util:
         return has_update
 
     @staticmethod
+    def copy_files(src_dir, dest_dir):
+        if Util.HOST_OS == Util.WINDOWS:
+            Util.execute(f'xcopy "{src_dir}" "{dest_dir}" /S /E /H /Y', show_cmd=True, show_duration=True)
+        else:
+            Util.execute(f'cp {src_dir}/* {dest_dir}', show_cmd=True, show_duration=True)
+
+    @staticmethod
     # committer date, instead of author date
     def get_working_dir_date():
         return (
