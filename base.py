@@ -1443,16 +1443,11 @@ class Util:
         'dawn': 'Dawn',
         'onnxruntime': 'ONNXRuntime',
         'skia': 'Skia',
-        'tfjs': 'TFJS',
         'v8': 'V8',
-        'wamr': 'WAMR',
-        'wasm': 'Wasm',
-        'wasmtime': 'Wasmtime',
         'webgl': 'WebGL',
         'webgpucts': 'WebGPUCTS',
         'webgpuspec': 'WebGPUSpec',
         'webplatformtests': 'WebPlatformTests',
-        'webrtc': 'WebRTC',
     }
     for project in CONTRIB_INFO:
         path = project
