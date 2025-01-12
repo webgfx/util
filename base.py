@@ -520,13 +520,13 @@ class Util:
     def diff_list(a, b):
         return list(set(a).difference(set(b)))
 
-    # To use LOCAL_SMTP_SERVER, you need to add machine name into wp-27:/etc/postfix/main.cf
+    # To use SMTP_SERVER, you need to add machine name into /etc/postfix/main.cf
     @staticmethod
     def send_email(subject, content='', sender='', to='', type=''):
         if not sender:
-            sender = 'webgraphics@intel.com'
+            sender = 'webgraphics@microsoft.com'
         if not to:
-            to = 'yang.gu@intel.com'
+            to = 'ygu@microsoft.com'
         if not type:
             type = 'plain'
 
@@ -544,11 +544,7 @@ class Util:
         msg.attach(MIMEText(content, type))
 
         try:
-            if False:
-                smtp_server = Util.LOCAL_SMTP_SERVER
-            else:
-                smtp_server = Util.INTEL_SMTP_SERVER
-            smtp = smtplib.SMTP(smtp_server)
+            smtp = smtplib.SMTP(Util.SMTP_SERVER)
             smtp.sendmail(sender, to_list, msg.as_string())
             Util.info('Email was sent successfully')
         except Exception as e:
@@ -620,9 +616,6 @@ class Util:
                 else:
                     tmp_author = line.rstrip('\n').replace('Author:', '').strip()
                     Util.warning('The author %s is in abnormal format' % tmp_author)
-            if tmp_author == '84498356+jzm-intel@users.noreply.github.com':
-                Util.info('The author %s is converted to zhaoming.jiang@intel.com' % tmp_author)
-                tmp_author = 'zhaoming.jiang@intel.com'
 
         # date & subject
         match = re.match('Date:(.*)', line)
@@ -915,7 +908,7 @@ class Util:
         dest_path_bk = dest_path + '.bk'
 
         # hack the src_name to support machine specific config
-        # For example, wp-27-hostapd.conf
+        # For example, hostapd.conf
         # src_name is changed here, so we can't put this before dest_path definition
         if os.path.exists(src_dir + '/' + Util.HOST_NAME + '-' + src_name):
             src_name = Util.HOST_NAME + '-' + src_name
@@ -1096,10 +1089,10 @@ class Util:
             if match:
                 driver_ver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
-            cmd = 'wmic path win32_VideoController get DriverDate,DriverVersion,Name,PNPDeviceID /value'
-            lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n\n')
+            cmd = 'powershell -c "Get-CIMInstance -query \'select * from win32_VideoController\'"'
+            lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n')
             for line in lines:
-                match = re.match(r'(.*)=(.*)', line)
+                match = re.match(r'(\S+).*: (.*)', line)
                 if match:
                     if match.group(1) == 'DriverDate':
                         driver_date = match.group(2)[0:8]
@@ -1109,7 +1102,6 @@ class Util:
                         name = match.group(2)
                     elif match.group(1) == 'PNPDeviceID' and not match.group(2)[0:3] == 'SWD':
                         device_id = re.search('DEV_(.{4})', match.group(2)).group(1)
-                        break
         return name, driver_date, driver_ver, device_id
 
     @staticmethod
@@ -1356,11 +1348,9 @@ class Util:
         return rev_name, date, rev
 
     # constants
-    MYSQL_SERVER = 'wp-27'
-    BACKUP_SERVER = 'wp-27.sh.intel.com'
-    BACKUP_SERVER2 = 'wp-28.sh.intel.com'  # the backup server for backup_server
-    INTEL_SMTP_SERVER = 'ecsmtp.pdx.intel.com'
-    LOCAL_SMTP_SERVER = 'wp-27.sh.intel.com'
+    BACKUP_SERVER = ''
+    BACKUP_SERVER2 = ''  # the backup server for backup_server
+    SMTP_SERVER = ''
     WINDOWS = 'win32'
     LINUX = 'linux'
     DARWIN = 'darwin'
@@ -1468,7 +1458,7 @@ class Util:
         ENV_SPLITTER = ':'
         EXEC_SUFFIX = ''
 
-    INTERNAL_WEBSERVER = 'http://wp-27'
+    INTERNAL_WEBSERVER = 'NA'
     INTERNAL_WEBSERVER_WEBBENCH = '%s/%s/webbench' % (INTERNAL_WEBSERVER, PROJECT_DIR)
 
 
