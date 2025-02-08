@@ -524,7 +524,7 @@ class Util:
     @staticmethod
     def send_email(subject, content='', sender='', to='', type=''):
         if not sender:
-            sender = 'webgraphics@microsoft.com'
+            sender = 'webgraphicschina@microsoft.com'
         if not to:
             to = 'ygu@microsoft.com'
         if not type:
@@ -1754,6 +1754,8 @@ examples:
         )
         parser.formatter_class = argparse.RawTextHelpFormatter
         args = parser.parse_args()
+        if args.target_os == 'default':
+            args.target_os = Util.HOST_OS
         self.args = args
 
         if args.timestamp == 'second':
