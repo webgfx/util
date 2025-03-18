@@ -1356,9 +1356,12 @@ class Util:
     DARWIN = 'darwin'
     CHROMEOS = 'chromeos'
     ANDROID = 'android'
+    AMD64 = 'AMD64'
+    ARM64 = 'ARM64'
     MAX_REV = 9999999
     BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}'  # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
+    HOST_ARCH = platform.machine()
     HOST_OS = sys.platform
     PYTHON = 'python3'
     if HOST_OS == WINDOWS:
@@ -1795,7 +1798,7 @@ examples:
 
         target_arch = args.target_arch
         if target_arch == 'default':
-            target_arch = 'x86_64'
+            target_arch = Util.HOST_ARCH
         self.target_arch = target_arch
 
         target_os = args.target_os
