@@ -1415,7 +1415,6 @@ class Util:
     PROJECT_TOOLKIT_DIR = format_slash.__func__('%s/toolkit' % PROJECT_DIR)
     PROJECT_WORK_DIR = format_slash.__func__('%s/work' % PROJECT_DIR)
 
-    GNP_SCRIPT = format_slash.__func__('%s/misc/gnp.py' % PROJECT_TOOLKIT_DIR)
     MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
 
     # We cannot ensure that all users on a host have ssh keys, so use a shared key
@@ -1805,6 +1804,8 @@ examples:
         if target_os == 'default':
             target_os = Util.HOST_OS
         self.target_os = target_os
+
+        self.GNP_SCRIPT = Util.format_slash(f'{ScriptRepo.ROOT_DIR}/misc/gnp.py')
 
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
