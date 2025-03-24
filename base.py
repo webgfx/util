@@ -1805,6 +1805,12 @@ examples:
             target_os = Util.HOST_OS
         self.target_os = target_os
 
+        if self.target_arch == Util.ARM64:
+            target_cpu = 'arm64'
+        elif self.target_arch == Util.AMD64:
+            target_cpu = 'x64'
+        self.target_cpu = target_cpu
+
         self.GNP_SCRIPT = Util.format_slash(f'{ScriptRepo.ROOT_DIR}/misc/gnp.py')
 
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
