@@ -422,6 +422,14 @@ class Util:
         Util.set_env('PATH', Util.ENV_SPLITTER.join(paths))
 
     @staticmethod
+    def prepend_depot_tools_path(rbe):
+        if rbe:
+            depot_tools_dir = Util.PROJECT_MS_DEPOT_TOOLS_DIR
+        else:
+            depot_tools_dir = Util.PROJECT_DEPOT_TOOLS_DIR
+        Util.prepend_path(f'{depot_tools_dir}{Util.ENV_SPLITTER}{depot_tools_dir}/python-bin{Util.ENV_SPLITTER}{depot_tools_dir}/scripts')
+
+    @staticmethod
     def del_filetype_in_dir(dir_path, filetype):
         for root, dirs, files in os.walk(dir_path):
             for name in files:
@@ -1403,19 +1411,20 @@ class Util:
     else:
         WORKSPACE_DIR = LINUX_WORKSPACE_DIR
 
-    BACKUP_DIR = format_slash.__func__('%s/backup' % WORKSPACE_DIR)
-    LINUX_BACKUP_DIR = '%s/backup' % LINUX_WORKSPACE_DIR
-    PROJECT_DIR = format_slash.__func__('%s/project' % WORKSPACE_DIR)
-    SERVER_DIR = format_slash.__func__('%s/server' % WORKSPACE_DIR)
+    BACKUP_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/backup')
+    LINUX_BACKUP_DIR = f'{LINUX_WORKSPACE_DIR}/backup'
+    PROJECT_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/project')
+    SERVER_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/server')
     HOME_DIR = format_slash.__func__(expanduser("~"))
 
-    PROJECT_MESA_DIR = format_slash.__func__('%s/mesa' % PROJECT_DIR)
-    PROJECT_DEPOT_TOOLS_DIR = format_slash.__func__('%s/depot_tools' % PROJECT_DIR)
-    PROJECT_MESA_BACKUP_DIR = format_slash.__func__('%s/backup' % PROJECT_MESA_DIR)
-    PROJECT_TOOLKIT_DIR = format_slash.__func__('%s/toolkit' % PROJECT_DIR)
-    PROJECT_WORK_DIR = format_slash.__func__('%s/work' % PROJECT_DIR)
+    PROJECT_MESA_DIR = format_slash.__func__(f'{PROJECT_DIR}/mesa')
+    PROJECT_DEPOT_TOOLS_DIR = format_slash.__func__(f'{PROJECT_DIR}/depot_tools')
+    PROJECT_MS_DEPOT_TOOLS_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/../depot_tools')
+    PROJECT_MESA_BACKUP_DIR = format_slash.__func__(f'{PROJECT_MESA_DIR}/backup')
+    PROJECT_TOOLKIT_DIR = format_slash.__func__(f'{PROJECT_DIR}/toolkit')
+    PROJECT_WORK_DIR = format_slash.__func__(f'{PROJECT_DIR}/work')
 
-    MESA_SCRIPT = format_slash.__func__('%s/misc/mesa.py' % PROJECT_TOOLKIT_DIR)
+    MESA_SCRIPT = format_slash.__func__(f'{PROJECT_TOOLKIT_DIR}/misc/mesa.py')
 
     # We cannot ensure that all users on a host have ssh keys, so use a shared key
     # instead of personal key to allow the service to always access server, no matter
@@ -1426,7 +1435,7 @@ class Util:
     # contrib
     # folder name: [display name, path]
     # display name is used in json files, so couldn't be changed
-    CONTRIB_DIR = format_slash.__func__('%s/contrib' % PROJECT_DIR)
+    CONTRIB_DIR = format_slash.__func__(f'{PROJECT_DIR}/contrib')
     CONTRIB_INFO_NAME = 0
     CONTRIB_INFO_PATH = 1
     CONTRIB_INFO = {
@@ -1816,7 +1825,7 @@ examples:
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
 
-        Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
+        #Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
 
     def _execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(
