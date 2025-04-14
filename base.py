@@ -427,7 +427,9 @@ class Util:
             depot_tools_dir = Util.PROJECT_MS_DEPOT_TOOLS_DIR
         else:
             depot_tools_dir = Util.PROJECT_DEPOT_TOOLS_DIR
-        Util.prepend_path(f'{depot_tools_dir}{Util.ENV_SPLITTER}{depot_tools_dir}/python-bin{Util.ENV_SPLITTER}{depot_tools_dir}/scripts')
+        Util.prepend_path(
+            f'{depot_tools_dir}{Util.ENV_SPLITTER}{depot_tools_dir}/python-bin{Util.ENV_SPLITTER}{depot_tools_dir}/scripts'
+        )
 
     @staticmethod
     def del_filetype_in_dir(dir_path, filetype):
@@ -975,7 +977,10 @@ class Util:
 
         if need_copy:
             if Util.HOST_OS == Util.WINDOWS:
-                os.remove(dest_path)
+                try:
+                    os.remove(dest_path)
+                except Exception as e:
+                    pass
             else:
                 cmd = f'rm "{dest_path}"'
                 if need_sudo:
@@ -1007,7 +1012,7 @@ class Util:
     @staticmethod
     def copy_files(src_dir, dest_dir):
         if Util.HOST_OS == Util.WINDOWS:
-            Util.execute(f'xcopy "{src_dir}" "{dest_dir}" /S /E /H /Y', show_cmd=True, show_duration=True)
+            Util.execute(f'xcopy "{src_dir}" "{dest_dir}" /E /H /Y', show_cmd=True, show_duration=True)
         else:
             Util.execute(f'cp {src_dir}/* {dest_dir}', show_cmd=True, show_duration=True)
 
@@ -1372,8 +1377,8 @@ class Util:
     HOST_ARCH = platform.machine()
     HOST_OS = sys.platform
     PYTHON = 'python3'
-    if HOST_OS == WINDOWS:
-        PYTHON = 'python.exe'  # Use default installed python on Windows
+    # if HOST_OS == WINDOWS:
+    #    PYTHON = 'python.exe'  # Use default installed python on Windows
     PYTHON_MAJOR = sys.version_info.major
     if HOST_OS == LINUX:
         result = subprocess.check_output(['cat', '/etc/lsb-release']).decode('utf-8')
@@ -1825,7 +1830,7 @@ examples:
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
 
-        #Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
+        # Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
 
     def _execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(
