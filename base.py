@@ -1811,7 +1811,10 @@ examples:
 
         target_arch = args.target_arch
         if target_arch == 'default':
-            target_arch = Util.HOST_ARCH
+            if Util.HOST_NAME == 'webgfx-10':
+                target_arch = Util.ARM64
+            else:
+                target_arch = Util.HOST_ARCH
         self.target_arch = target_arch
 
         target_os = args.target_os
