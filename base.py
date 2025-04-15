@@ -1115,7 +1115,8 @@ class Util:
                         name = match.group(2)
                     elif match.group(1) == 'PNPDeviceID' and not match.group(2)[0:3] == 'SWD':
                         device_id = re.search('DEV_(.{4})', match.group(2)).group(1)
-        return name, driver_date, driver_ver, device_id
+                        vendor_id = re.search('VEN_(.{4})', match.group(2)).group(1)
+        return name, driver_date, driver_ver, device_id, vendor_id
 
     @staticmethod
     def get_os_info():
@@ -1476,6 +1477,10 @@ class Util:
 
     INTERNAL_WEBSERVER = 'NA'
     INTERNAL_WEBSERVER_WEBBENCH = '%s/%s/webbench' % (INTERNAL_WEBSERVER, PROJECT_DIR)
+    VENDOR_ID_INTEL = '8086'
+    VENDOR_ID_AMD = '1002'
+    VENDOR_ID_NVIDIA = '10de'
+    VENDOR_ID_QUALCOMM = 'QCOM'
 
 
 class Timer:
