@@ -547,20 +547,32 @@ class Util:
             content = '\n\n'.join(content)
 
         to_list = to.split(',')
-        msg = MIMEMultipart('alternative')
-        msg['From'] = sender
-        msg['To'] = to
-        msg['Subject'] = subject
-        msg.attach(MIMEText(content, type))
 
-        try:
-            smtp = smtplib.SMTP(Util.SMTP_SERVER)
-            smtp.sendmail(sender, to_list, msg.as_string())
-            Util.info('Email was sent successfully')
-        except Exception as e:
-            Util.error('Failed to send mail: %s' % e)
-        finally:
-            smtp.quit()
+        if False:
+            msg = MIMEMultipart('alternative')
+            msg['From'] = sender
+            msg['To'] = to
+            msg['Subject'] = subject
+            msg.attach(MIMEText(content, type))
+            try:
+                smtp = smtplib.SMTP(Util.SMTP_SERVER)
+                smtp.sendmail(sender, to_list, msg.as_string())
+                Util.info('Email was sent successfully')
+            except Exception as e:
+                Util.error('Failed to send mail: %s' % e)
+            finally:
+                smtp.quit()
+
+        import win32com.client as win32
+        outlook = win32.Dispatch('outlook.application')
+        mail = outlook.CreateItem(0)
+        mail.To = to
+        mail.Subject = subject
+        if type == 'plain':
+            mail.Body = content
+        elif type == 'html':
+            mail.HTMLBody = content
+        mail.Send()
 
     @staticmethod
     def get_quotation():
