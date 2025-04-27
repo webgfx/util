@@ -534,7 +534,7 @@ class Util:
     @staticmethod
     def send_email(subject, content='', sender='', to='', type=''):
         if not sender:
-            sender = 'webgraphicschina@microsoft.com'
+            sender = 'ygu@microsoft.com'
         if not to:
             to = 'ygu@microsoft.com'
         if not type:
