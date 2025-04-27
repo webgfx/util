@@ -1364,7 +1364,8 @@ class Util:
     # constants
     BACKUP_SERVER = ''
     BACKUP_SERVER2 = ''  # the backup server for backup_server
-    SMTP_SERVER = ''
+    #SMTP_SERVER = 'webgfx-100.guest.corp.microsoft.com'
+    SMTP_SERVER = '172.27.111.253'
     WINDOWS = 'win32'
     LINUX = 'linux'
     DARWIN = 'darwin'
