@@ -80,7 +80,7 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
                 try:
                     return f(*args, **kwargs)
                 except ExceptionToCheck as e:
-                    msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    msg = f'{e}, Retrying in {mdelay} seconds...'
                     if logger:
                         logger.warning(msg)
                     else:
@@ -559,20 +559,24 @@ class Util:
                 smtp.sendmail(sender, to_list, msg.as_string())
                 Util.info('Email was sent successfully')
             except Exception as e:
-                Util.error('Failed to send mail: %s' % e)
+                Util.error(f'Failed to send mail: {e}')
             finally:
                 smtp.quit()
 
-        import win32com.client as win32
-        outlook = win32.Dispatch('outlook.application')
-        mail = outlook.CreateItem(0)
-        mail.To = to
-        mail.Subject = subject
-        if type == 'plain':
-            mail.Body = content
-        elif type == 'html':
-            mail.HTMLBody = content
-        mail.Send()
+        try:
+            import win32com.client as win32
+            outlook = win32.Dispatch('outlook.application')
+            mail = outlook.CreateItem(0)
+            mail.To = to
+            mail.Subject = subject
+            if type == 'plain':
+                mail.Body = content
+            elif type == 'html':
+                mail.HTMLBody = content
+            mail.Send()
+            Util.info('Email was sent')
+        except Exception as e:
+            Util.warning(f'This device does not support email: {e}')
 
     @staticmethod
     def get_quotation():
@@ -1358,7 +1362,7 @@ class Util:
                 try:
                     shutil.move('%s/%s' % (Util.WORKSPACE_DIR, rev_name), '%s/' % local_backup_dir)
                 except Exception as e:
-                    Util.warning('shutil.move: %s' % e)
+                    Util.warning(f'shutil.move: {e}')
         return rev_name, date, rev
 
     @staticmethod
