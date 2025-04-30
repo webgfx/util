@@ -643,6 +643,18 @@ class Util:
                     tmp_author = line.rstrip('\n').replace('Author:', '').strip()
                     Util.warning('The author %s is in abnormal format' % tmp_author)
 
+            unreal_real_authors = {
+                '107654914+xiaofeihan1@users.noreply.github.com': 'xiaofeihan@microsoft.com',
+                '43032123+feich-ms@users.noreply.github.com': 'feich@microsoft.com',
+                '7679871+fs-eire@users.noreply.github.com': 'yulongw@microsoft.com',
+            }
+            for unreal_author in unreal_real_authors:
+                if tmp_author == unreal_author:
+                    real_author = unreal_real_authors[unreal_author]
+                    Util.info(f'The author {tmp_author} is converted to {real_author}')
+                    tmp_author = real_author
+                    break
+
         # date & subject
         match = re.match('Date:(.*)', line)
         if match:
