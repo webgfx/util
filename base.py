@@ -647,6 +647,7 @@ class Util:
                 '107654914+xiaofeihan1@users.noreply.github.com': 'xiaofeihan@microsoft.com',
                 '43032123+feich-ms@users.noreply.github.com': 'feich@microsoft.com',
                 '7679871+fs-eire@users.noreply.github.com': 'yulongw@microsoft.com',
+                'zhjiang@microsoft.com': 'zhaoming.jiang@microsoft.com',
             }
             for unreal_author in unreal_real_authors:
                 if tmp_author == unreal_author:
@@ -1475,6 +1476,7 @@ class Util:
     CONTRIB_INFO_PATH = 1
     CONTRIB_INFO = {
         'angle': 'ANGLE',
+        'catapult': 'Catapult',
         'chromium': 'Chromium',
         'dawn': 'Dawn',
         'onnxruntime': 'ONNXRuntime',
