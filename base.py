@@ -424,7 +424,7 @@ class Util:
     @staticmethod
     def prepend_depot_tools_path(rbe):
         if rbe:
-            depot_tools_dir = Util.PROJECT_MS_DEPOT_TOOLS_DIR
+            depot_tools_dir = Util.PROJECT_RBE_DEPOT_TOOLS_DIR
         else:
             depot_tools_dir = Util.PROJECT_DEPOT_TOOLS_DIR
         Util.prepend_path(
@@ -565,6 +565,7 @@ class Util:
 
         try:
             import win32com.client as win32
+
             outlook = win32.Dispatch('outlook.application')
             mail = outlook.CreateItem(0)
             mail.To = to
@@ -1393,7 +1394,7 @@ class Util:
     # constants
     BACKUP_SERVER = ''
     BACKUP_SERVER2 = ''  # the backup server for backup_server
-    #SMTP_SERVER = 'webgfx-100.guest.corp.microsoft.com'
+    # SMTP_SERVER = 'webgfx-100.guest.corp.microsoft.com'
     SMTP_SERVER = '172.27.111.253'
     WINDOWS = 'win32'
     LINUX = 'linux'
@@ -1455,7 +1456,7 @@ class Util:
 
     PROJECT_MESA_DIR = format_slash.__func__(f'{PROJECT_DIR}/mesa')
     PROJECT_DEPOT_TOOLS_DIR = format_slash.__func__(f'{PROJECT_DIR}/depot_tools')
-    PROJECT_MS_DEPOT_TOOLS_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/../depot_tools')
+    PROJECT_RBE_DEPOT_TOOLS_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/../depot_tools')
     PROJECT_MESA_BACKUP_DIR = format_slash.__func__(f'{PROJECT_MESA_DIR}/backup')
     PROJECT_TOOLKIT_DIR = format_slash.__func__(f'{PROJECT_DIR}/toolkit')
     PROJECT_WORK_DIR = format_slash.__func__(f'{PROJECT_DIR}/work')
@@ -1780,8 +1781,8 @@ class Program(object):
             '--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second'
         )
         parser.add_argument('--log-file', dest='log_file', help='log file')
-        parser.add_argument('--proxy', dest='proxy', help='proxy')
         parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
+        parser.add_argument('--disable-rbe', dest='disable_rbe', help='disable rbe', action='store_true')
         parser.add_argument(
             '--target-arch',
             dest='target_arch',
@@ -1824,16 +1825,6 @@ examples:
         Util.info('Log file: %s' % log_file)
         self.log_file = Util.format_slash(log_file)
 
-        if args.proxy:
-            proxy_parts = args.proxy.split(':')
-            proxy_address = proxy_parts[0]
-            proxy_port = proxy_parts[1]
-        else:
-            proxy_address = ''
-            proxy_port = ''
-        self.proxy_address = proxy_address
-        self.proxy_port = proxy_port
-
         if args.root_dir:
             if not os.path.exists(args.root_dir):
                 Util.error('root_dir %s does not exist' % args.root_dir)
@@ -1866,10 +1857,18 @@ examples:
 
         self.GNP_SCRIPT = Util.format_slash(f'{ScriptRepo.ROOT_DIR}/misc/gnp.py')
 
+        if self.args.disable_rbe:
+            self.rbe = False
+            self.DEPOT_TOOLS_DIR = Util.PROJECT_DEPOT_TOOLS_DIR
+        else:
+            self.rbe = True
+            self.DEPOT_TOOLS_DIR = Util.PROJECT_RBE_DEPOT_TOOLS_DIR
+        Util.prepend_depot_tools_path(self.rbe)
+
+        Util.set_env("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
+
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
-
-        # Util.set_env('DEPOT_TOOLS_WIN_TOOLCHAIN', '0')
 
     def _execute(self, cmd, show_cmd=True, exit_on_error=True, return_out=False, show_duration=False, dryrun=False):
         return Util.execute(
@@ -1886,19 +1885,3 @@ examples:
         return Util.simple_execute(
             cmd=cmd, show_cmd=show_cmd, exit_on_error=exit_on_error, show_duration=show_duration, dryrun=dryrun
         )
-
-    def _set_boto(self):
-        if not self.args.proxy:
-            return
-
-        boto_file = ScriptRepo.IGNORE_BOTO_FILE
-        if not os.path.exists(boto_file):
-            lines = [
-                '[Boto]',
-                'proxy = %s' % self.proxy_address,
-                'proxy_port = %s' % self.proxy_port,
-                'proxy_rdns = True',
-            ]
-            Util.append_file(boto_file, lines)
-
-        Util.set_env('NO_AUTH_BOTO_CONFIG', boto_file)
