@@ -1138,7 +1138,7 @@ class Util:
                 match = re.match(r'(\S+).*: (.*)', line)
                 if match:
                     if match.group(1) == 'DriverDate':
-                        driver_date = match.group(2)[0:8]
+                        driver_date = match.group(2)
                     elif match.group(1) == 'DriverVersion':
                         driver_ver = match.group(2)
                     elif match.group(1) == 'Name' and not match.group(2) == 'Microsoft Remote Display Adapter':
