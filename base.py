@@ -427,9 +427,10 @@ class Util:
             depot_tools_dir = Util.PROJECT_RBE_DEPOT_TOOLS_DIR
         else:
             depot_tools_dir = Util.PROJECT_DEPOT_TOOLS_DIR
-        Util.prepend_path(
-            f'{depot_tools_dir}{Util.ENV_SPLITTER}{depot_tools_dir}/python-bin{Util.ENV_SPLITTER}{depot_tools_dir}/scripts'
-        )
+        # Util.prepend_path(
+        #    f'{depot_tools_dir}{Util.ENV_SPLITTER}{depot_tools_dir}/python-bin{Util.ENV_SPLITTER}{depot_tools_dir}/scripts'
+        # )
+        # Util.prepend_path(f'{depot_tools_dir}{Util.ENV_SPLITTER}{depot_tools_dir}/scripts')
 
     @staticmethod
     def del_filetype_in_dir(dir_path, filetype):
@@ -1408,7 +1409,7 @@ class Util:
     COMMIT_STR = 'commit (.*)'
     HOST_ARCH = platform.machine()
     HOST_OS = sys.platform
-    PYTHON = 'python3'
+    PYTHON = 'python3.exe'
     # if HOST_OS == WINDOWS:
     #    PYTHON = 'python.exe'  # Use default installed python on Windows
     PYTHON_MAJOR = sys.version_info.major
@@ -1456,7 +1457,7 @@ class Util:
 
     PROJECT_MESA_DIR = format_slash.__func__(f'{PROJECT_DIR}/mesa')
     PROJECT_DEPOT_TOOLS_DIR = format_slash.__func__(f'{PROJECT_DIR}/depot_tools')
-    PROJECT_RBE_DEPOT_TOOLS_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/../depot_tools')
+    PROJECT_RBE_DEPOT_TOOLS_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/../r/depot_tools')
     PROJECT_MESA_BACKUP_DIR = format_slash.__func__(f'{PROJECT_MESA_DIR}/backup')
     PROJECT_TOOLKIT_DIR = format_slash.__func__(f'{PROJECT_DIR}/toolkit')
     PROJECT_WORK_DIR = format_slash.__func__(f'{PROJECT_DIR}/work')
@@ -1776,67 +1777,56 @@ class ChromiumRepo:
 
 
 class Program(object):
-    def __init__(self, parser):
-        parser.add_argument(
-            '--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second'
-        )
-        parser.add_argument('--log-file', dest='log_file', help='log file')
-        parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
-        parser.add_argument('--disable-rbe', dest='disable_rbe', help='disable rbe', action='store_true')
-        parser.add_argument(
-            '--target-arch',
-            dest='target_arch',
-            help='target arch',
-            choices=['x86', 'arm', 'x86_64', 'arm64'],
-            default='default',
-        )
-        parser.add_argument(
-            '--target-os',
-            dest='target_os',
-            help='target os, choices can be android, linux, chromeos, win32, darwin',
-            default='default',
-        )
-
-        parser.epilog = (
-            '''
-examples:
-{0} {1} --root-dir --target-arch'''.format(
-                Util.PYTHON, parser.prog
+    def __init__(self, parser=None, root_dir=None, target_arch='default', target_os='default', timestamp='second'):
+        if parser:
+            parser.add_argument('--root-dir', dest='root_dir', help='set root directory')
+            parser.add_argument(
+                '--target-arch',
+                dest='target_arch',
+                help='target arch',
+                choices=['x86', 'arm', 'x86_64', 'arm64'],
+                default='default',
             )
-            + parser.epilog
-        )
-        parser.formatter_class = argparse.RawTextHelpFormatter
-        args = parser.parse_args()
-        if args.target_os == 'default':
-            args.target_os = Util.HOST_OS
-        self.args = args
+            parser.add_argument(
+                '--target-os',
+                dest='target_os',
+                help='target os, choices can be android, linux, chromeos, win32, darwin',
+                default='default',
+            )
+            parser.add_argument(
+                '--timestamp', dest='timestamp', help='timestamp', choices=['day', 'second'], default='second'
+            )
 
-        if args.timestamp == 'second':
-            timestamp = Util.get_datetime()
-        elif args.timestamp == 'day':
-            timestamp = Util.get_datetime(format='%Y%m%d')
-        self.timestamp = timestamp
-
-        if args.log_file:
-            log_file = args.log_file
+            parser.epilog = (
+                '''
+    examples:
+    {0} {1} --root-dir --target-arch'''.format(
+                    Util.PYTHON, parser.prog
+                )
+                + parser.epilog
+            )
+            parser.formatter_class = argparse.RawTextHelpFormatter
+            args = parser.parse_args()
+            if args.target_os == 'default':
+                args.target_os = Util.HOST_OS
+            self.args = args
         else:
-            script_name = os.path.basename(sys.argv[0]).replace('.py', '')
-            log_file = ScriptRepo.IGNORE_LOG_DIR + '/' + script_name + '-' + timestamp + '.log'
-        Util.info('Log file: %s' % log_file)
-        self.log_file = Util.format_slash(log_file)
+            self.args = None
 
-        if args.root_dir:
-            if not os.path.exists(args.root_dir):
-                Util.error('root_dir %s does not exist' % args.root_dir)
-            root_dir = args.root_dir
-        elif os.path.islink(sys.argv[0]):
-            root_dir = Util.get_symlink_dir()
-        else:
-            root_dir = os.path.abspath(os.getcwd())
+        if self.args and self.args.root_dir:
+            root_dir = self.args.root_dir
+            if not os.path.exists(root_dir):
+                Util.error('root_dir %s does not exist' % root_dir)
+        elif not root_dir:
+            if os.path.islink(sys.argv[0]):
+                root_dir = Util.get_symlink_dir()
+            else:
+                root_dir = os.path.abspath(os.getcwd())
         Util.chdir(root_dir)
         self.root_dir = Util.format_slash(root_dir)
 
-        target_arch = args.target_arch
+        if self.args:
+            target_arch = self.args.target_arch
         if target_arch == 'default':
             if Util.HOST_NAME == 'webgfx-10':
                 target_arch = Util.ARM64
@@ -1844,28 +1834,32 @@ examples:
                 target_arch = Util.HOST_ARCH
         self.target_arch = target_arch
 
-        target_os = args.target_os
+        if self.args:
+            target_os = self.args.target_os
         if target_os == 'default':
             target_os = Util.HOST_OS
         self.target_os = target_os
 
         if self.target_arch == Util.ARM64:
             target_cpu = 'arm64'
-        elif self.target_arch == Util.AMD64:
+        else:
             target_cpu = 'x64'
         self.target_cpu = target_cpu
 
-        self.GNP_SCRIPT = Util.format_slash(f'{ScriptRepo.ROOT_DIR}/misc/gnp.py')
+        if self.args:
+            timestamp = self.args.timestamp
+        if timestamp == 'second':
+            self.timestamp = Util.get_datetime()
+        elif timestamp == 'day':
+            self.timestamp = Util.get_datetime(format='%Y%m%d')
 
-        if self.args.disable_rbe:
-            self.rbe = False
-            self.DEPOT_TOOLS_DIR = Util.PROJECT_DEPOT_TOOLS_DIR
-        else:
-            self.rbe = True
-            self.DEPOT_TOOLS_DIR = Util.PROJECT_RBE_DEPOT_TOOLS_DIR
-        Util.prepend_depot_tools_path(self.rbe)
+        script_name = os.path.basename(sys.argv[0]).replace('.py', '')
+        log_file = ScriptRepo.IGNORE_LOG_DIR + '/' + script_name + '-' + self.timestamp + '.log'
+        # Util.info('Log file: %s' % log_file)
+        self.log_file = Util.format_slash(log_file)
 
-        Util.set_env("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
+        # Util.prepend_depot_tools_path(True)
+        # Util.set_env("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
 
         Util.ensure_dir(ScriptRepo.IGNORE_TIMESTAMP_DIR)
         Util.ensure_dir(ScriptRepo.IGNORE_LOG_DIR)
