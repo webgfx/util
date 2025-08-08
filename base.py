@@ -531,7 +531,6 @@ class Util:
     def diff_list(a, b):
         return list(set(a).difference(set(b)))
 
-    # To use SMTP_SERVER, you need to add machine name into /etc/postfix/main.cf
     @staticmethod
     def send_email(subject, content='', sender='', to='', type=''):
         if not sender:
@@ -546,23 +545,6 @@ class Util:
 
         if isinstance(content, list):
             content = '\n\n'.join(content)
-
-        to_list = to.split(',')
-
-        if False:
-            msg = MIMEMultipart('alternative')
-            msg['From'] = sender
-            msg['To'] = to
-            msg['Subject'] = subject
-            msg.attach(MIMEText(content, type))
-            try:
-                smtp = smtplib.SMTP(Util.SMTP_SERVER)
-                smtp.sendmail(sender, to_list, msg.as_string())
-                Util.info('Email was sent successfully')
-            except Exception as e:
-                Util.error(f'Failed to send mail: {e}')
-            finally:
-                smtp.quit()
 
         try:
             import win32com.client as win32
@@ -1043,7 +1025,7 @@ class Util:
     @staticmethod
     def copy_files(src_dir, dest_dir):
         if Util.HOST_OS == Util.WINDOWS:
-            Util.execute(f'xcopy "{src_dir}" "{dest_dir}" /E /H /Y', show_cmd=True, show_duration=True)
+            Util.execute(f'xcopy "{src_dir}" "{dest_dir}" /e /s /y', show_cmd=True, show_duration=True)
         else:
             Util.execute(f'cp {src_dir}/* {dest_dir}', show_cmd=True, show_duration=True)
 
@@ -1392,11 +1374,16 @@ class Util:
                 break
         return rev_name, date, rev
 
+    @staticmethod
+    def impossible():
+        """
+        This function is used to indicate that the code should not reach here.
+        It can be used for debugging purposes or to ensure that certain code paths are unreachable.
+        """
+        raise RuntimeError("This code path should not be reached.")
+
     # constants
-    BACKUP_SERVER = ''
-    BACKUP_SERVER2 = ''  # the backup server for backup_server
-    # SMTP_SERVER = 'webgfx-100.guest.corp.microsoft.com'
-    SMTP_SERVER = '172.27.111.253'
+    BACKUP_SERVER = 'webgfx-200'
     WINDOWS = 'win32'
     LINUX = 'linux'
     DARWIN = 'darwin'
@@ -1443,14 +1430,13 @@ class Util:
         USER_NAME = os.getenv('USER')
     CPU_COUNT = multiprocessing.cpu_count()
 
-    LINUX_WORKSPACE_DIR = '/workspace'
     if HOST_OS == WINDOWS:
-        WORKSPACE_DIR = 'd:/workspace'
+        ROOT_DIR = 'd:'
     else:
-        WORKSPACE_DIR = LINUX_WORKSPACE_DIR
+        ROOT_DIR = '/'
 
-    BACKUP_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/backup')
-    LINUX_BACKUP_DIR = f'{LINUX_WORKSPACE_DIR}/backup'
+    WORKSPACE_DIR = f'{ROOT_DIR}/workspace'
+    BACKUP_DIR = f'{ROOT_DIR}/backup'
     PROJECT_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/project')
     SERVER_DIR = format_slash.__func__(f'{WORKSPACE_DIR}/server')
     HOME_DIR = format_slash.__func__(expanduser("~"))
@@ -1581,21 +1567,21 @@ class ChromiumRepo:
     REV_INFO_INDEX_ROLL_COUNT = 3
 
     def __init__(self, root_dir):
-        self.root_dir = root_dir
+        self.repo_dir = f"{root_dir}/src"
         self.info = [self.FAKE_REV, self.FAKE_REV, {}]
 
     def get_working_dir_date(self):
-        Util.chdir(self.root_dir)
+        Util.chdir(self.repo_dir)
         cmd = 'git log -1 --date=format:"%Y%m%d" --format="%cd"'
         return Util.execute(cmd, show_cmd=False, return_out=True)[1].rstrip('\n').rstrip('\r')
 
     def get_working_dir_rev(self):
-        Util.chdir(self.root_dir)
+        Util.chdir(self.repo_dir)
         cmd = 'git log --shortstat -1'
         return self._get_head_rev(cmd)
 
     def get_repo_rev(self, branch='main'):
-        Util.chdir(self.root_dir)
+        Util.chdir(self.repo_dir)
         cmd = 'git log --shortstat -1 origin/%s' % branch
         return self._get_head_rev(cmd)
 
