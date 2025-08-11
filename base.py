@@ -1095,41 +1095,148 @@ class Util:
         return [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]
 
     @staticmethod
+    def _format_driver_date(date_string):
+        """Convert driver date from YYYY/M/D format to YYYYMMDD format"""
+        if not date_string:
+            return ''
+
+        try:
+            # Handle different date formats that might be returned
+            # Examples: "2024/9/13", "2024/09/13", "2024-9-13", etc.
+            date_part = date_string.split()[0] if date_string else ''
+
+            # Replace different separators with /
+            date_part = date_part.replace('-', '/').replace('.', '/')
+
+            if '/' in date_part:
+                parts = date_part.split('/')
+                if len(parts) == 3:
+                    year = parts[0].zfill(4)
+                    month = parts[1].zfill(2)
+                    day = parts[2].zfill(2)
+                    return f"{year}{month}{day}"
+
+            return date_part  # Return as-is if we can't parse it
+        except Exception:
+            return date_string  # Return original if parsing fails
+
+    @staticmethod
     def get_gpu_info():
         name = ''
         driver_date = ''
         driver_ver = ''
+        device_id = ''
+        vendor_id = ''
 
         if Util.HOST_OS == Util.LINUX:
             # Util.ensure_pkg('mesa-utils')
             _, out = Util.execute('lspci -nn | grep VGA', return_out=True, log_file='')
             match = re.search(r': (.*) \[.*:(.*)\]', out)
-            name = match.group(1)
-            device_id = match.group(2)
-            if 'NVIDIA' in name:
-                _, driver_ver = Util.execute('nvidia-smi |grep Driver', return_out=True)
-                match = re.search(r'Driver Version: (\d+.\d+)', driver_ver)
-            else:
-                _, driver_ver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
-                match = re.search('(Mesa.*)', driver_ver)
             if match:
-                driver_ver = match.group(1)
-        elif Util.HOST_OS == Util.WINDOWS:
-            cmd = 'powershell -c "Get-CIMInstance -query \'select * from win32_VideoController\'"'
-            lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n')
-            for line in lines:
-                match = re.match(r'(\S+).*: (.*)', line)
+                name = match.group(1)
+                device_id = match.group(2)
+                if 'NVIDIA' in name:
+                    _, driver_ver = Util.execute('nvidia-smi |grep Driver', return_out=True)
+                    match = re.search(r'Driver Version: (\d+.\d+)', driver_ver)
+                else:
+                    _, driver_ver = Util.execute('glxinfo | grep \'OpenGL version\'', return_out=True)
+                    match = re.search('(Mesa.*)', driver_ver)
                 if match:
-                    if match.group(1) == 'DriverDate':
-                        driver_date = match.group(2)
-                    elif match.group(1) == 'DriverVersion':
-                        driver_ver = match.group(2)
-                    elif match.group(1) == 'Name' and not match.group(2) == 'Microsoft Remote Display Adapter':
-                        name = match.group(2)
-                    elif match.group(1) == 'PNPDeviceID' and not match.group(2)[0:3] == 'SWD':
-                        device_id = re.search('DEV_(.{4})', match.group(2)).group(1)
-                        vendor_id = re.search('VEN_(.{4})', match.group(2)).group(1)
+                    driver_ver = match.group(1)
+        elif Util.HOST_OS == Util.WINDOWS:
+            # Query only enabled video controllers to avoid disabled GPUs
+            # Availability=3 means "Running/Full Power", Availability=8 means "Offline"
+            cmd = 'powershell -c "Get-CIMInstance -query \'select * from win32_VideoController where Availability=3 or Availability=8\' | Sort-Object Name"'
+            try:
+                lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n')
+            except Exception as e:
+                Util.warning(f'Failed to get GPU info via CIM: {e}')
+                return name, driver_date, driver_ver, device_id, vendor_id
+
+            # Process each GPU until we find the first active one that's not a software adapter
+            current_gpu = {}
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+
+                match = re.match(r'(\S+)\s*:\s*(.*)', line)
+                if match:
+                    property_name = match.group(1)
+                    property_value = match.group(2).strip()
+
+                    # Start of a new GPU entry (Caption is usually the first property)
+                    if property_name == 'Caption' and current_gpu:
+                        # Process the previous GPU if it's valid
+                        if Util._is_valid_gpu(current_gpu):
+                            name = current_gpu.get('Name', '')
+                            driver_date = current_gpu.get('DriverDate', '')
+                            driver_ver = current_gpu.get('DriverVersion', '')
+                            pnp_device_id = current_gpu.get('PNPDeviceID', '')
+                            if pnp_device_id and pnp_device_id[0:3] != 'SWD':
+                                try:
+                                    device_match = re.search('DEV_(.{4})', pnp_device_id)
+                                    vendor_match = re.search('VEN_(.{4})', pnp_device_id)
+                                    if device_match and vendor_match:
+                                        device_id = device_match.group(1)
+                                        vendor_id = vendor_match.group(1)
+                                except Exception as e:
+                                    Util.warning(f'Failed to parse PNPDeviceID {pnp_device_id}: {e}')
+                            break
+                        current_gpu = {}
+
+                    # Collect GPU properties
+                    if property_name == 'DriverDate':
+                        # Clean up and format the date to YYYYMMDD
+                        formatted_date = Util._format_driver_date(property_value)
+                        current_gpu['DriverDate'] = formatted_date
+                    elif property_name == 'DriverVersion':
+                        current_gpu['DriverVersion'] = property_value
+                    elif property_name == 'Name':
+                        current_gpu['Name'] = property_value
+                    elif property_name == 'PNPDeviceID':
+                        current_gpu['PNPDeviceID'] = property_value
+                    elif property_name == 'Status':
+                        current_gpu['Status'] = property_value
+
+            # Process the last GPU if we haven't found one yet
+            if not name and current_gpu and Util._is_valid_gpu(current_gpu):
+                name = current_gpu.get('Name', '')
+                driver_date = current_gpu.get('DriverDate', '')
+                driver_ver = current_gpu.get('DriverVersion', '')
+                pnp_device_id = current_gpu.get('PNPDeviceID', '')
+                if pnp_device_id and pnp_device_id[0:3] != 'SWD':
+                    try:
+                        device_match = re.search('DEV_(.{4})', pnp_device_id)
+                        vendor_match = re.search('VEN_(.{4})', pnp_device_id)
+                        if device_match and vendor_match:
+                            device_id = device_match.group(1)
+                            vendor_id = vendor_match.group(1)
+                    except Exception as e:
+                        Util.warning(f'Failed to parse PNPDeviceID {pnp_device_id}: {e}')
+
         return name, driver_date, driver_ver, device_id, vendor_id
+
+    @staticmethod
+    def _is_valid_gpu(gpu_info):
+        """Check if a GPU is valid (not a software adapter or disabled)"""
+        name = gpu_info.get('Name', '')
+        pnp_device_id = gpu_info.get('PNPDeviceID', '')
+        status = gpu_info.get('Status', '')
+
+        # Skip software adapters and remote display adapters
+        if 'Microsoft' in name and ('Remote Display' in name or 'Basic Display' in name or 'Basic Render' in name):
+            return False
+
+        # Skip software-only devices (SWD prefix)
+        if pnp_device_id and pnp_device_id[0:3] == 'SWD':
+            return False
+
+        # Check if the device status indicates it's working properly
+        if status and status.lower() not in ['ok', 'working properly', '']:
+            return False
+
+        return True
 
     @staticmethod
     def get_os_info():
