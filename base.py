@@ -1096,13 +1096,13 @@ class Util:
 
     @staticmethod
     def _format_driver_date(date_string):
-        """Convert driver date from YYYY/M/D format to YYYYMMDD format"""
+        """Convert driver date to YYYYMMDD format"""
         if not date_string:
             return ''
 
         try:
             # Handle different date formats that might be returned
-            # Examples: "2024/9/13", "2024/09/13", "2024-9-13", etc.
+            # Examples: "6/21/2006", "2024/9/13", "2024-9-13", etc.
             date_part = date_string.split()[0] if date_string else ''
 
             # Replace different separators with /
@@ -1111,9 +1111,16 @@ class Util:
             if '/' in date_part:
                 parts = date_part.split('/')
                 if len(parts) == 3:
-                    year = parts[0].zfill(4)
-                    month = parts[1].zfill(2)
-                    day = parts[2].zfill(2)
+                    # Check if first part is 4 digits (year first format: YYYY/M/D)
+                    if len(parts[0]) == 4 and parts[0].isdigit():
+                        year = parts[0]
+                        month = parts[1].zfill(2)
+                        day = parts[2].zfill(2)
+                    # Otherwise assume M/D/YYYY format
+                    else:
+                        month = parts[0].zfill(2)
+                        day = parts[1].zfill(2)
+                        year = parts[2].zfill(4)
                     return f"{year}{month}{day}"
 
             return date_part  # Return as-is if we can't parse it
@@ -1144,17 +1151,19 @@ class Util:
                 if match:
                     driver_ver = match.group(1)
         elif Util.HOST_OS == Util.WINDOWS:
-            # Query only enabled video controllers to avoid disabled GPUs
-            # Availability=3 means "Running/Full Power", Availability=8 means "Offline"
-            cmd = 'powershell -c "Get-CIMInstance -query \'select * from win32_VideoController where Availability=3 or Availability=8\' | Sort-Object Name"'
+            # Query all video controllers to find hardware GPUs and software fallbacks
+            # First try enabled ones, then all if needed for software adapters
+            cmd = 'powershell -c "Get-CIMInstance -query \'select * from win32_VideoController\' | Sort-Object Name"'
             try:
                 lines = Util.execute(cmd, show_cmd=False, return_out=True)[1].split('\n')
             except Exception as e:
                 Util.warning(f'Failed to get GPU info via CIM: {e}')
                 return name, driver_date, driver_ver, device_id, vendor_id
 
-            # Process each GPU until we find the first active one that's not a software adapter
+            # Collect all GPUs first, then prioritize hardware over software
+            all_gpus = []
             current_gpu = {}
+
             for line in lines:
                 line = line.strip()
                 if not line:
@@ -1167,22 +1176,9 @@ class Util:
 
                     # Start of a new GPU entry (Caption is usually the first property)
                     if property_name == 'Caption' and current_gpu:
-                        # Process the previous GPU if it's valid
+                        # Store the previous GPU if it's valid
                         if Util._is_valid_gpu(current_gpu):
-                            name = current_gpu.get('Name', '')
-                            driver_date = current_gpu.get('DriverDate', '')
-                            driver_ver = current_gpu.get('DriverVersion', '')
-                            pnp_device_id = current_gpu.get('PNPDeviceID', '')
-                            if pnp_device_id and pnp_device_id[0:3] != 'SWD':
-                                try:
-                                    device_match = re.search('DEV_(.{4})', pnp_device_id)
-                                    vendor_match = re.search('VEN_(.{4})', pnp_device_id)
-                                    if device_match and vendor_match:
-                                        device_id = device_match.group(1)
-                                        vendor_id = vendor_match.group(1)
-                                except Exception as e:
-                                    Util.warning(f'Failed to parse PNPDeviceID {pnp_device_id}: {e}')
-                            break
+                            all_gpus.append(current_gpu.copy())
                         current_gpu = {}
 
                     # Collect GPU properties
@@ -1199,12 +1195,45 @@ class Util:
                     elif property_name == 'Status':
                         current_gpu['Status'] = property_value
 
-            # Process the last GPU if we haven't found one yet
-            if not name and current_gpu and Util._is_valid_gpu(current_gpu):
-                name = current_gpu.get('Name', '')
-                driver_date = current_gpu.get('DriverDate', '')
-                driver_ver = current_gpu.get('DriverVersion', '')
-                pnp_device_id = current_gpu.get('PNPDeviceID', '')
+            # Add the last GPU if valid
+            if current_gpu and Util._is_valid_gpu(current_gpu):
+                all_gpus.append(current_gpu)
+
+            # Three-tier fallback system:
+            # 1. Hardware GPUs (highest priority)
+            # 2. Basic Display/Render Adapters
+            # 3. Remote Display Adapters (last resort)
+            selected_gpu = None
+
+            # First, look for hardware GPUs
+            for gpu in all_gpus:
+                if Util._is_hardware_gpu(gpu):
+                    selected_gpu = gpu
+                    break
+
+            # If no hardware GPU found, look for Basic Display/Render software adapters
+            if not selected_gpu:
+                for gpu in all_gpus:
+                    if Util._is_software_gpu(gpu):
+                        selected_gpu = gpu
+                        break
+
+            # If still no GPU found, accept Remote Display Adapter as last resort
+            if not selected_gpu:
+                for gpu in all_gpus:
+                    if Util._is_remote_display_gpu(gpu):
+                        selected_gpu = gpu
+                        break
+
+            # Extract information from selected GPU
+            if selected_gpu:
+                name = selected_gpu.get('Name', '')
+                driver_date = selected_gpu.get('DriverDate', '')
+                driver_ver = selected_gpu.get('DriverVersion', '')
+                pnp_device_id = selected_gpu.get('PNPDeviceID', '')
+
+                # Extract device and vendor IDs
+                # For hardware GPUs, parse from PNPDeviceID
                 if pnp_device_id and pnp_device_id[0:3] != 'SWD':
                     try:
                         device_match = re.search('DEV_(.{4})', pnp_device_id)
@@ -1215,11 +1244,23 @@ class Util:
                     except Exception as e:
                         Util.warning(f'Failed to parse PNPDeviceID {pnp_device_id}: {e}')
 
+                # For specific Microsoft software adapters, set correct device IDs
+                elif 'Microsoft' in name and (
+                    'Basic Render' in name or 'Basic Display' in name or 'Remote Display' in name
+                ):
+                    vendor_id = '1414'  # Microsoft vendor ID
+                    if 'Basic Render' in name:
+                        device_id = '008c'
+                    elif 'Basic Display' in name:
+                        device_id = '00ff'  # Microsoft Basic Display Adapter
+                    elif 'Remote Display' in name:
+                        device_id = '008c'  # Same as Basic Render Driver when used as fallback
+
         return name, driver_date, driver_ver, device_id, vendor_id
 
     @staticmethod
-    def _is_valid_gpu(gpu_info):
-        """Check if a GPU is valid (not a software adapter or disabled)"""
+    def _is_hardware_gpu(gpu_info):
+        """Check if a GPU is a valid hardware GPU (not a software adapter)"""
         name = gpu_info.get('Name', '')
         pnp_device_id = gpu_info.get('PNPDeviceID', '')
         status = gpu_info.get('Status', '')
@@ -1232,11 +1273,52 @@ class Util:
         if pnp_device_id and pnp_device_id[0:3] == 'SWD':
             return False
 
-        # Check if the device status indicates it's working properly
+        # Check if the device status indicates it's working properly (Error status is invalid)
         if status and status.lower() not in ['ok', 'working properly', '']:
             return False
 
         return True
+
+    @staticmethod
+    def _is_software_gpu(gpu_info):
+        """Check if a GPU is a valid software adapter that can be used as fallback"""
+        name = gpu_info.get('Name', '')
+        pnp_device_id = gpu_info.get('PNPDeviceID', '')
+        status = gpu_info.get('Status', '')
+
+        # Accept Microsoft software adapters (but exclude Remote Display)
+        if 'Microsoft' in name:
+            # Skip Remote Display adapters as they're not useful for rendering
+            if 'Remote Display' in name:
+                return False
+            # Accept Basic Display and Basic Render adapters
+            if 'Basic Display' in name or 'Basic Render' in name:
+                # Check if the device status indicates it's working properly
+                if not status or status.lower() in ['ok', 'working properly', '']:
+                    return True
+
+        return False
+
+    @staticmethod
+    def _is_remote_display_gpu(gpu_info):
+        """Check if a GPU is a Remote Display Adapter (last resort fallback)"""
+        name = gpu_info.get('Name', '')
+        status = gpu_info.get('Status', '')
+
+        # Accept Microsoft Remote Display adapters as last resort
+        if 'Microsoft' in name and 'Remote Display' in name:
+            # Check if the device status indicates it's working properly
+            if not status or status.lower() in ['ok', 'working properly', '']:
+                return True
+
+        return False
+
+    @staticmethod
+    def _is_valid_gpu(gpu_info):
+        """Check if a GPU is valid (hardware, software, or remote display)"""
+        return (
+            Util._is_hardware_gpu(gpu_info) or Util._is_software_gpu(gpu_info) or Util._is_remote_display_gpu(gpu_info)
+        )
 
     @staticmethod
     def get_os_info():
