@@ -601,15 +601,9 @@ class Util:
         return relative_out_dir
 
     @staticmethod
-    def parse_git_line(
-        lines, index, tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll
-    ):
+    def parse_git_line(lines, index, tmp_author, tmp_date, tmp_subject, tmp_rev):
         line = lines[index]
         strip_line = line.strip()
-        # hash
-        match = re.match(Util.COMMIT_STR, line)
-        if match:
-            tmp_hash = match.group(1)
 
         # author
         match = re.match('Author:', lines[index])
@@ -621,11 +615,13 @@ class Util:
                 match = re.search(r'(\S+@\S+)', line)
                 if match:
                     tmp_author = match.group(1)
-                    tmp_author = tmp_author.lstrip('<')
-                    tmp_author = tmp_author.rstrip('>')
+                    tmp_author = tmp_author.replace('<', '').replace('>', '')
                 else:
-                    tmp_author = line.rstrip('\n').replace('Author:', '').strip()
-                    Util.warning('The author %s is in abnormal format' % tmp_author)
+                    match = re.search(r'<(.*)>', line)
+                    if match:
+                        tmp_author = match.group(1)
+                    else:
+                        tmp_author = 'NA'
 
             unreal_real_authors = {
                 '107654914+xiaofeihan1@users.noreply.github.com': 'xiaofeihan@microsoft.com',
@@ -640,43 +636,21 @@ class Util:
                     tmp_author = real_author
                     break
 
-        # date & subject
+        # date and subject
         match = re.match('Date:(.*)', line)
         if match:
             tmp_date = match.group(1).strip()
             index += 2
             tmp_subject = lines[index].strip()
-            match = re.match(r'Roll (.*) ([a-zA-Z0-9]+)..([a-zA-Z0-9]+) \((\d+) commits\)', tmp_subject)
-            if match and match.group(1) != 'src-internal':
-                tmp_is_roll = True
 
         # rev
-        # < r291561, use below format
-        # example: git-svn-id: svn://svn.chromium.org/chrome/trunk/src@291560 0039d316-1c4b-4281-b951-d872f2087c98
-        match = re.match('git-svn-id: svn://svn.chromium.org/chrome/trunk/src@(.*) .*', strip_line)
-        if match:
-            tmp_rev = int(match.group(1))
-
         # >= r291561, use below format
         # example: Cr-Commit-Position: refs/heads/main@{#349370}
         match = re.match('Cr-Commit-Position: refs/heads/main@{#(.*)}', strip_line)
         if match:
             tmp_rev = int(match.group(1))
 
-        if re.match(r'(\d+) files? changed', strip_line):
-            match = re.search(r'(\d+) insertion(s)*\(\+\)', strip_line)
-            if match:
-                tmp_insertion = int(match.group(1))
-            else:
-                tmp_insertion = 0
-
-            match = re.search(r'(\d+) deletion(s)*\(-\)', strip_line)
-            if match:
-                tmp_deletion = int(match.group(1))
-            else:
-                tmp_deletion = 0
-
-        return (tmp_rev, tmp_hash, tmp_author, tmp_date, tmp_subject, tmp_insertion, tmp_deletion, tmp_is_roll)
+        return (tmp_author, tmp_date, tmp_subject, tmp_rev)
 
     @staticmethod
     def get_browser_path(browser_name, target_os=None):
@@ -1656,6 +1630,7 @@ class Util:
         'catapult': 'Catapult',
         'chromium': 'Chromium',
         'dawn': 'Dawn',
+        'edge': 'Edge',
         'onnxruntime': 'ONNXRuntime',
         'skia': 'Skia',
         'v8': 'V8',
@@ -1666,7 +1641,7 @@ class Util:
     }
     for project in CONTRIB_INFO:
         path = project
-        if project == 'chromium':
+        if project in ['chromium', 'edge']:
             path += '/src'
         CONTRIB_INFO[project] = [CONTRIB_INFO[project], format_slash.__func__(f'{CONTRIB_DIR}/{path}')]
 
