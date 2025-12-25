@@ -1229,6 +1229,11 @@ class Util:
                         device_id = '00ff'  # Microsoft Basic Display Adapter
                     elif 'Remote Display' in name:
                         device_id = '008c'  # Same as Basic Render Driver when used as fallback
+            else:
+                # No GPU found, return WARP info as fallback
+                name = 'Microsoft Basic Render Driver'
+                vendor_id = '1414'
+                device_id = '008c'
 
         return name, driver_date, driver_ver, device_id, vendor_id
 
