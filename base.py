@@ -1698,7 +1698,7 @@ class ScriptRepo:
     if Util.HOST_OS == Util.WINDOWS:
         Util.prepend_path(TOOL_DIR)
 
-    IGNORE_DIR = Util.format_slash('%s/ignore' % ROOT_DIR)
+    IGNORE_DIR = Util.format_slash('%s/gitignore' % ROOT_DIR)
     IGNORE_CHROMIUM_DIR = Util.format_slash('%s/chromium' % IGNORE_DIR)
     IGNORE_CHROMIUM_DOWNLOAD_DIR = Util.format_slash('%s/download' % IGNORE_CHROMIUM_DIR)
     IGNORE_LOG_DIR = Util.format_slash('%s/log' % IGNORE_DIR)
