@@ -131,7 +131,14 @@ class Util:
         out = ''
         if timeout or return_out:
             process = subprocess.Popen(
-                cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+                cmd,
+                shell=shell,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf8',
+                # Console tools emit the OEM code page on non-English Windows, which is
+                # not valid utf8. Without this the reader thread dies and out becomes None.
+                errors='replace',
             )
             if timeout:
                 process_timer = threading.Timer(timeout, process.kill)
@@ -1587,7 +1594,9 @@ class Util:
     elif HOST_OS == WINDOWS:
         # platform.version() will read 19041 instead of 19042 on Windows 10
         if PYTHON_MAJOR == 3:
-            HOST_OS_RELEASE = subprocess.check_output(['cmd', '/c', 'ver']).decode('utf-8').split('\n')[1].rstrip('\r')
+            HOST_OS_RELEASE = (
+                subprocess.check_output(['cmd', '/c', 'ver']).decode('utf-8', errors='replace').split('\n')[1].rstrip('\r')
+            )
         else:
             HOST_OS_RELEASE = subprocess.check_output(['cmd', '/c', 'ver']).split('\n')[1].rstrip('\r')
 
