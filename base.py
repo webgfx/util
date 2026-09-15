@@ -3,6 +3,8 @@ import atexit
 import calendar
 import codecs
 import collections
+import ctypes
+from ctypes import wintypes
 import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -50,6 +52,34 @@ try:
     from selenium.webdriver.support.ui import WebDriverWait
 except ImportError:
     pass
+
+
+def _get_host_arch():
+    if sys.platform == 'win32':
+        try:
+            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel32.GetCurrentProcess.argtypes = []
+            kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+            kernel32.IsWow64Process2.argtypes = [
+                wintypes.HANDLE,
+                ctypes.POINTER(wintypes.USHORT),
+                ctypes.POINTER(wintypes.USHORT),
+            ]
+            kernel32.IsWow64Process2.restype = wintypes.BOOL
+            process_machine = wintypes.USHORT()
+            native_machine = wintypes.USHORT()
+            if kernel32.IsWow64Process2(
+                kernel32.GetCurrentProcess(), ctypes.byref(process_machine), ctypes.byref(native_machine)
+            ):
+                arch = {0xAA64: 'ARM64', 0x8664: 'AMD64', 0x014C: 'x86', 0x01C4: 'ARM'}.get(native_machine.value)
+                if arch:
+                    return arch
+        except (AttributeError, OSError):
+            pass
+        arch = os.environ.get('PROCESSOR_ARCHITEW6432') or os.environ.get('PROCESSOR_ARCHITECTURE')
+        if arch:
+            return arch
+    return platform.machine()
 
 
 def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
@@ -1569,7 +1599,7 @@ class Util:
     MAX_REV = 9999999
     BACKUP_PATTERN = r'(\d{8})-(\d*)-[a-z0-9]{40}'  # <date>-<rev>-<hash>
     COMMIT_STR = 'commit (.*)'
-    HOST_ARCH = platform.machine()
+    HOST_ARCH = _get_host_arch()
     HOST_OS = sys.platform
     PYTHON = 'python3.exe'
     # if HOST_OS == WINDOWS:
